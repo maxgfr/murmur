@@ -19,13 +19,19 @@ test("proxy mode: answers with citations and no settings screen", async ({ page 
   await expect(widget.getByRole("button", { name: "AI settings" })).toBeHidden();
 });
 
-test("visitor key mode: first question opens the settings, then the board patches cords", async ({
+test("the in-browser model comes first, a visitor's key can replace it, then the board patches cords", async ({
   page,
 }) => {
   await offlineCatalog(page);
+  // A deterministic browser without WebGPU: the prompt then offers the key straight away.
+  await page.addInitScript(() =>
+    Object.defineProperty(navigator, "gpu", { configurable: true, value: undefined }),
+  );
   await page.goto("/murmur/");
   const widget = page.locator("#handset murmur-chat");
   await page.getByRole("button", { name: "How do I add it to my site?" }).click();
+  await expect(widget.locator(".consent")).toContainText("no WebGPU");
+  await widget.getByRole("button", { name: "Use an API key instead" }).click();
   await expect(widget.getByText("Connect an AI model")).toBeVisible();
   await widget.getByLabel("Local server (Ollama, LM Studio)").check();
   await widget.getByLabel("Server URL").fill("http://localhost:4317/mock/v1");
@@ -35,6 +41,14 @@ test("visitor key mode: first question opens the settings, then the board patche
   await expect(page.locator("#cords path.core")).toHaveCount(2);
   await expect(page.locator("#oplog")).toContainText("Patched to");
   await expect(page.locator(".socket.patched")).toHaveCount(2);
+
+  // The key stays the choice after a reload, until the visitor switches back.
+  await page.reload();
+  await page.getByRole("button", { name: "Where is my API key stored?" }).click();
+  await expect(page.locator("#handset murmur-chat").locator(".consent")).toHaveCount(0);
+  await expect(page.locator("#handset murmur-chat").getByRole("log")).toContainText(
+    "one script tag",
+  );
 });
 
 test("configurator writes the snippet", async ({ page }) => {

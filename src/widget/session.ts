@@ -32,8 +32,10 @@ export interface WidgetOptions {
   /** Open the panel on load. */
   open?: boolean;
   /**
-   * Answer with a model that runs in the visitor's browser on WebGPU: `true` for the default
-   * (LFM3 1.7B, about 1.1 GB, downloaded once after the visitor agrees), or your own spec.
+   * The model that runs in the visitor's browser on WebGPU, the default way to answer when there
+   * is no proxy: LFM3 1.7B, about 1.1 GB downloaded once after the visitor agrees. Visitors can
+   * still connect their own key in the AI settings. Pass your own spec to run another model, or
+   * `false` to offer only the visitor's key.
    */
   local?: boolean | LocalModelSpec;
 }
@@ -70,10 +72,31 @@ export class ChatSession {
     }
   }
 
+  /**
+   * How this session answers: your own model, then the owner's proxy, then the visitor's own
+   * key if they chose one, else the model in the browser.
+   */
   get mode(): Mode {
     if (this.options.model) return "custom";
-    if (this.options.local || this.visitorChoseLocal) return "local";
-    return this.options.llm?.endpoint ? "proxy" : "visitor";
+    if (this.options.llm?.endpoint) return "proxy";
+    if (!this.localAllowed) return "visitor";
+    return readLocal(`${this.key}-local`) === "0" ? "visitor" : "local";
+  }
+
+  /** Whether the in-browser model is offered: not with your own model or a proxy, nor `local: false`. */
+  get localAllowed(): boolean {
+    return !this.options.model && !this.options.llm?.endpoint && this.options.local !== false;
+  }
+
+  /**
+   * Before a question: a visitor who saved a key before the in-browser model became the default,
+   * and never chose between the two, keeps their key.
+   */
+  async settleChoice(): Promise<void> {
+    if (!this.localAllowed || readLocal(`${this.key}-local`) !== null) return;
+    const [{ isConfigured }, store] = await Promise.all([import("../llm/index"), this.store()]);
+    const saved = await store.load();
+    if (saved && isConfigured(saved)) writeLocal(`${this.key}-local`, "0");
   }
 
   /** The in-browser model this session would run. */
@@ -83,13 +106,9 @@ export class ChatSession {
     return (await import("../local/index")).DEFAULT_LOCAL_MODEL;
   }
 
-  private get visitorChoseLocal(): boolean {
-    return readLocal(`${this.key}-local`) === "1";
-  }
-
-  /** The visitor picks the in-browser model (or goes back to a key). */
+  /** The visitor picks the in-browser model, or their own key. */
   useLocal(on: boolean): void {
-    writeLocal(`${this.key}-local`, on ? "1" : null);
+    writeLocal(`${this.key}-local`, on ? "1" : "0");
     this.engine = null;
   }
 
