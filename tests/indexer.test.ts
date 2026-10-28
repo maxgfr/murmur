@@ -66,3 +66,27 @@ describe("files", () => {
     expect(pageOf("/a", "x", ".htm")).toEqual({ url: "/a", html: "x" });
   });
 });
+
+describe("extractSections edge cases", () => {
+  test("skips hidden content and makes duplicate anchors unique", () => {
+    const html = `<main><h2>Same</h2><p>one</p><p hidden>gone</p><p aria-hidden="true">gone too</p><h2>Same</h2><p>two</p></main>`;
+    const { sections } = extractSections(parseHtml(html));
+    expect(sections.map((s) => s.anchor)).toEqual(["same", "same-"]);
+    expect(sections.map((s) => s.text).join(" ")).not.toContain("gone");
+  });
+  test("follows a custom content root and falls back to the body", () => {
+    const html = `<body><div class="content"><h2>In</h2><p>kept</p></div><p>outside</p></body>`;
+    expect(extractSections(parseHtml(html), { root: ".content" }).sections[0]?.text).toBe("kept");
+    expect(
+      extractSections(parseHtml(html))
+        .sections.map((s) => s.text)
+        .join(" "),
+    ).toContain("outside");
+  });
+  test("a page without content gives no section", () => {
+    expect(
+      extractSections(parseHtml("<html><head><title>T</title></head><body></body></html>"))
+        .sections,
+    ).toEqual([]);
+  });
+});

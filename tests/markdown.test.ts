@@ -34,7 +34,30 @@ describe("renderMarkdown", () => {
   test("keeps fenced code verbatim and opens external links safely", () => {
     renderMarkdown(target, "```\n**not bold**\n```\n[docs](https://x.dev)", cite);
     const html = (target as unknown as { innerHTML: string }).innerHTML;
-    expect(html).toContain("<pre><code>**not bold**</code></pre>");
+    expect(html).toContain('<pre tabindex="0"><code>**not bold**</code></pre>');
     expect(html).toContain('rel="noopener noreferrer"');
+  });
+});
+
+describe("renderMarkdown edge cases", () => {
+  test("headings become bold paragraphs and list items continue on indented lines", () => {
+    renderMarkdown(target, "## Title\n- first\n  still first\n- second", cite);
+    const html = (target as unknown as { innerHTML: string }).innerHTML;
+    expect(html).toBe(
+      "<p><strong>Title</strong></p><ul><li>first still first</li><li>second</li></ul>",
+    );
+  });
+  test("keeps relative and anchor links, drops data: urls", () => {
+    renderMarkdown(target, "[a](/docs) [b](#x) [c](data:text/html,hi)", cite);
+    const html = (target as unknown as { innerHTML: string }).innerHTML;
+    expect(html).toContain('<a href="/docs">a</a>');
+    expect(html).toContain('<a href="#x">b</a>');
+    expect(html).not.toContain("data:");
+  });
+  test("an unterminated code fence still renders as code", () => {
+    renderMarkdown(target, "```\nconst a = 1;", cite);
+    expect((target as unknown as { innerHTML: string }).innerHTML).toBe(
+      '<pre tabindex="0"><code>const a = 1;</code></pre>',
+    );
   });
 });

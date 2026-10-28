@@ -90,7 +90,8 @@ No server, no analytics. The question and the matching passages go to the AI pro
 bun install
 bun run dev        # build, then serve on http://localhost:4317/murmur/
 bun run test       # unit tests
-bun run test:e2e   # Playwright, against a fake OpenAI-compatible endpoint
+bun run test:e2e   # Playwright against a fake OpenAI-compatible endpoint, axe WCAG 2.2 AA scans
+bun run test:package  # packs, installs and checks the CLI, Node imports and types
 bun run typecheck && bun run lint
 ```
 

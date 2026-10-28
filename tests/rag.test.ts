@@ -97,3 +97,34 @@ describe("site board designations", () => {
     expect(designation("Options")).toBe("Options");
   });
 });
+
+describe("retriever edge cases", () => {
+  test("an empty index answers nothing", async () => {
+    expect(await bm25Retriever(buildIndex([])).search("anything")).toEqual([]);
+  });
+  test("respects the limit and keeps the best match first", async () => {
+    const many = buildIndex(
+      Array.from({ length: 10 }, (_, i) => ({
+        url: `/p${i}`,
+        title: `Page ${i}`,
+        sections: [
+          { heading: "", anchor: "", text: i === 7 ? "refund policy refund" : `refund note ${i}` },
+        ],
+      })),
+    );
+    const hits = await bm25Retriever(many).search("refund policy", { limit: 3 });
+    expect(hits).toHaveLength(3);
+    expect(hits[0]?.url).toBe("/p7");
+  });
+  test("a typo still finds the passage", async () => {
+    const hits = await bm25Retriever(index).search("contcat equipe");
+    expect(hits[0]?.title).toBe("Contact");
+  });
+});
+
+describe("splitText edge cases", () => {
+  test("empty and whitespace text give no passage", () => {
+    expect(splitText("")).toEqual([]);
+    expect(splitText("\n\n   \n")).toEqual([]);
+  });
+});

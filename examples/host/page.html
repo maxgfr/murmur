@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Page hôte · murmur</title>
+    <style>body { margin: 0 auto; max-width: 680px; padding: 48px 20px; font: 18px/1.6 Georgia, serif; }</style>
+  </head>
+  <body>
+    <main>
+      <h1>Boulangerie Le Fournil</h1>
+      <p>Sans index : le widget lit cette page. Le modèle se choisit dans l'URL (?model=mock, slow ou fail-401).</p>
+      <h2 id="horaires">Horaires</h2>
+      <p>Du mardi au samedi, de 7 h à 19 h 30. Fermé le lundi.</p>
+      <h2 id="commandes">Commandes</h2>
+      <p>Les gâteaux de 6 parts et plus se commandent 48 heures à l'avance.</p>
+    </main>
+    <script type="module">
+      const model = new URLSearchParams(location.search).get("model") || "mock";
+      const s = document.createElement("script");
+      s.type = "module";
+      s.src = "/murmur/cdn/murmur.js";
+      Object.assign(s.dataset, { endpoint: "http://localhost:4317/mock/v1", model, storageKey: `host-${model}` });
+      document.body.append(s);
+    </script>
+  </body>
+</html>

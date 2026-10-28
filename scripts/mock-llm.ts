@@ -13,7 +13,24 @@ export async function mockLlm(req: Request, path: string): Promise<Response> {
       { object: "list", data: [{ id: "mock", object: "model" }] },
       { headers: CORS },
     );
-  const body = (await req.json()) as { messages?: { role: string; content: unknown }[] };
+  const body = (await req.json()) as {
+    model?: string;
+    messages?: { role: string; content: unknown }[];
+  };
+  // model "fail-401" answers like a provider refusing the key; "slow" streams one word every 250ms.
+  if (body.model === "fail-401") {
+    return Response.json(
+      {
+        error: {
+          message: "Incorrect API key provided.",
+          type: "invalid_request_error",
+          code: "invalid_api_key",
+        },
+      },
+      { status: 401, headers: CORS },
+    );
+  }
+  const delay = body.model === "slow" ? 250 : 25;
   const system = JSON.stringify(body.messages?.[0]?.content ?? "");
   const count = (system.match(/<<<SOURCE id=/g) ?? []).length;
   const answer = count
@@ -35,7 +52,7 @@ export async function mockLlm(req: Request, path: string): Promise<Response> {
         choices: [{ index: 0, delta: { role: "assistant", content: "" }, finish_reason: null }],
       });
       for (const w of words) {
-        await Bun.sleep(25);
+        await Bun.sleep(delay);
         send({ ...base, choices: [{ index: 0, delta: { content: w }, finish_reason: null }] });
       }
       send({ ...base, choices: [{ index: 0, delta: {}, finish_reason: "stop" }] });
