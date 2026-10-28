@@ -87,9 +87,13 @@ describe("grounding", () => {
 });
 
 describe("site board designations", () => {
-  test("cuts a heading at its first pause, three words at most", () => {
+  test("keeps whole short clauses and never ends on a joining word", () => {
     expect(designation("Set it up, copy one line.")).toBe("Set it up");
     expect(designation("Your AI key never goes in your HTML.")).toBe("Your AI key");
+    expect(designation("What it does not do.")).toBe("What it does not do");
+    expect(designation("AI models and keys")).toBe("AI models and keys");
+    expect(designation("From your pages to an answer, without a server.")).toBe("From your pages");
+    expect(designation("Votre clé d'IA n'est jamais dans votre HTML.")).toBe("Votre clé d'IA");
     expect(designation("Options")).toBe("Options");
   });
 });

@@ -428,6 +428,7 @@ html {
   color: var(--muted);
   text-align: center;
   text-wrap: balance;
+  min-height: 3.45em;
 }
 .socket.patched .tag {
   color: var(--ink);
