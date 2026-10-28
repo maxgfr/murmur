@@ -39,13 +39,11 @@ describe("optionsFromDataset", () => {
     });
   });
 
-  test("reads the mode, the preload and the owner's key", () => {
-    expect(
-      optionsFromDataset(
-        { mode: "local", preload: "idle", apiKey: "sk-x", provider: "openrouter" },
-        "https://a.test/",
-      ),
-    ).toEqual({ mode: "local", preload: "idle", llm: { provider: "openrouter", apiKey: "sk-x" } });
+  test("reads the mode and the preload", () => {
+    expect(optionsFromDataset({ mode: "local", preload: "idle" }, "https://a.test/")).toEqual({
+      mode: "local",
+      preload: "idle",
+    });
     expect(optionsFromDataset({ mode: "turbo", preload: "now" }, "https://a.test/")).toEqual({});
   });
 

@@ -33,9 +33,12 @@ export async function mockLlm(req: Request, path: string): Promise<Response> {
   const delay = body.model === "slow" ? 250 : 25;
   const system = JSON.stringify(body.messages?.[0]?.content ?? "");
   const count = (system.match(/<<<SOURCE id=/g) ?? []).length;
-  const answer = count
-    ? `From this site: add **one script tag** to your pages [1]${count > 1 ? ", and the key never sits in the page [2]" : ""}.`
-    : "I could not find that on this site.";
+  // model "late" cites the last source first, as models often do.
+  const answer = !count
+    ? "I could not find that on this site."
+    : body.model === "late" && count > 1
+      ? `First the last source [${count}], then the first one [1], then the last again [${count}].`
+      : `From this site: add **one script tag** to your pages [1]${count > 1 ? ", and the key never sits in the page [2]" : ""}.`;
   const words = answer.split(/(?<= )/);
   const stream = new ReadableStream({
     async start(controller) {

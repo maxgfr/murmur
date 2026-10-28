@@ -129,13 +129,9 @@
   "limits.l5text": "LFM3 1.7B needs WebGPU (recent Chrome, Edge, Safari) and about 1.1 GB on first use. It answers in seconds once loaded, with less nuance than a hosted model.",
   "wire.modeAuto": "Browser, key optional",
   "wire.modeAutoHint": "The browser model, and visitors may connect their own key instead.",
-  "wire.modeOwner": "My key in the page",
-  "wire.modeOwnerHint": "Visitors just chat with your key, which anyone can read.",
   "wire.preload": "Download",
   "wire.preloadQuestion": "On the first question",
   "wire.preloadOpen": "When the bubble opens",
   "wire.preloadIdle": "As soon as the page is idle",
-  "wire.preloadConsent": "After asking the visitor",
-  "wire.apiKey": "Your API key",
-  "wire.ownerWarn": "This key will be in your HTML: anyone can read and reuse it. Only use a key with a spending limit (OpenRouter, a restricted project key), or a Worker."
+  "wire.preloadConsent": "After asking the visitor"
 }

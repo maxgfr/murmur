@@ -62,6 +62,15 @@ test.describe("on a host page, without an index", () => {
     expect(text).not.toContain("never sits in the page");
   });
 
+  test("sources are numbered in the order the answer cites them", async ({ page }) => {
+    await page.goto("/page.html?model=late");
+    const widget = await ask(page, "Horaires et commandes ?");
+    const answer = widget.locator(".msg.bot").last();
+    await expect(answer.locator("ol.sources li")).toHaveCount(2);
+    expect(await answer.locator("p a.cite").allTextContents()).toEqual(["1", "2", "1"]);
+    expect(await answer.locator("ol.sources .cite").allTextContents()).toEqual(["1", "2"]);
+  });
+
   test("fills the screen on a phone", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: "reduce" });

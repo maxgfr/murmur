@@ -16,7 +16,6 @@
             <tr><td><code>data-endpoint</code></td><td>URL of your OpenAI-compatible proxy (https). Visitors then chat without a key.</td></tr>
             <tr><td><code>data-mode</code></td><td><code>proxy</code>, <code>local</code>, <code>auto</code> (default) or <code>key</code>: who answers (see <a href="#ai-models-and-keys">AI models and keys</a>).</td></tr>
             <tr><td><code>data-preload</code></td><td>When the in-browser model downloads: <code>question</code> (default), <code>open</code>, <code>idle</code> or <code>consent</code>.</td></tr>
-            <tr><td><code>data-api-key</code></td><td>Your own key, used for every visitor. Public: only a key with a spending limit.</td></tr>
             <tr><td><code>data-local</code></td><td><code>false</code> turns off the model that runs in the visitor's browser, which is otherwise the default when there is no proxy: visitors then need their own key.</td></tr>
             <tr><td><code>data-provider</code></td><td>Provider preselected for visitors who bring their own key: <code>openai</code>, <code>anthropic</code>, <code>google</code>, <code>mistral</code>, <code>openrouter</code>, <code>groq</code>…</td></tr>
             <tr><td><code>data-model</code></td><td>Model id: the one preselected for visitors, or the one asked of your proxy.</td></tr>
@@ -51,14 +50,14 @@
         <pre tabindex="0"><code>- run: npx murmur-rag index ./_site --base /my-repo/ --out ./_site/murmur-index.json</code></pre>
 
                 <h2 id="ai-models-and-keys">AI models and keys</h2>
-        <p>Pick how the bubble answers with <code>data-mode</code>. A key written in a web page can be read by anyone, so the first two keep it out of the page.</p>
+        <p>Pick how the bubble answers with <code>data-mode</code>. A key written in a web page can be read by anyone, so murmur never takes one: your key stays in your Worker, and a visitor's key stays in their own browser.</p>
         <table>
           <thead><tr><th><code>data-mode</code></th><th>Who answers</th></tr></thead>
           <tbody>
             <tr><td><code>proxy</code></td><td>Your Worker, holding your key. Implied by <code>data-endpoint</code>. What most sites use.</td></tr>
             <tr><td><code>local</code></td><td>A model in the visitor's browser, nothing else: no key settings.</td></tr>
-            <tr><td><code>auto</code> (default)</td><td>Your proxy or your key if set; else the browser model, with visitors free to connect their own key.</td></tr>
-            <tr><td><code>key</code></td><td>A key only: yours (<code>data-api-key</code>) or else each visitor's own.</td></tr>
+            <tr><td><code>auto</code> (default)</td><td>Your proxy if set; else the browser model, with visitors free to connect their own key.</td></tr>
+            <tr><td><code>key</code></td><td>Each visitor's own key, nothing else.</td></tr>
           </tbody>
         </table>
         <h3 id="your-proxy">Your Worker holds the key</h3>
@@ -83,8 +82,6 @@
         <h3 id="visitor-key">Each visitor brings their key</h3>
         <p>With <code>data-mode="key"</code>, or from the AI settings in the default mode, the visitor picks a provider and a model, pastes a key, tests it and saves. <a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">llm-connect</a> encrypts the key with AES-GCM under a key the page cannot export, keeps it in the browser (for the session, or on the device if the visitor asks) and sends it only to the chosen provider. The visitor can also point the widget at Ollama or LM Studio on their own machine.</p>
         <p>The browser calls the provider directly, so the provider must accept calls from web pages (CORS): OpenAI, Anthropic, Google, Mistral, OpenRouter, Groq, Together, DeepInfra, xAI and local servers with CORS enabled do.</p>
-        <h3 id="owner-key">Your key in the page</h3>
-        <p><code>data-api-key</code> with <code>data-provider</code> (and <code>data-model</code>, else the provider's recommended one) answers every visitor with your key. It is in your HTML: anyone can read it and use it elsewhere. Only use a key with a spending limit (an OpenRouter key with a credit cap, a restricted project key), and prefer a Worker.</p>
 
         <h2 id="npm-package">npm package</h2>
         <pre tabindex="0"><code>npm install murmur-rag</code></pre>

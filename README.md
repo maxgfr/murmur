@@ -17,7 +17,6 @@ Paste the line before `</body>`. Without options, the bubble answers from the pa
 | `data-index`                                                     | URL of the index written by `murmur index` (`/murmur-index.json`). Without it, the current page is read                       |
 | `data-endpoint`                                                  | Your OpenAI-compatible proxy (https): visitors chat without a key                                                             |
 | `data-mode`, `data-preload`                                      | Who answers (`proxy`, `local`, `auto`, `key`) and when the in-browser model downloads (`question`, `open`, `idle`, `consent`) |
-| `data-api-key`                                                   | Your own key for every visitor: public, only a key with a spending limit                                                      |
 | `data-local`                                                     | `false` turns off the in-browser model, the default when there is no proxy: visitors then need their own key                  |
 | `data-provider`, `data-model`                                    | Provider and model preselected for visitors, or the model asked of the proxy                                                  |
 | `data-instructions`                                              | Your instructions to the assistant                                                                                            |
@@ -39,18 +38,17 @@ Reads every `.html`, `.md` and `.txt` file (or a live `sitemap.xml`), keeps the 
 
 ## AI models and keys
 
-Pick who answers with `data-mode`:
+Pick who answers with `data-mode`. A key in a web page can be read by anyone, so murmur never takes one: yours stays in your Worker, a visitor's in their own browser.
 
-| `data-mode`      |                                                                                              |
-| ---------------- | -------------------------------------------------------------------------------------------- |
-| `proxy`          | Your Worker holds the key (implied by `data-endpoint`). Most sites                           |
-| `local`          | Only a model in the visitor's browser, no key settings                                       |
-| `auto` (default) | Your proxy or key if set, else the browser model with visitors free to connect their own key |
-| `key`            | A key only: yours (`data-api-key`), else each visitor's own                                  |
+| `data-mode`      |                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| `proxy`          | Your Worker holds the key (implied by `data-endpoint`). Most sites                    |
+| `local`          | Only a model in the visitor's browser, no key settings                                |
+| `auto` (default) | Your proxy if set, else the browser model with visitors free to connect their own key |
+| `key`            | Each visitor's own key, nothing else                                                  |
 - **Your Worker.** Deploy [`examples/cloudflare-worker`](examples/cloudflare-worker) (about 40 lines): it keeps the key as a secret, allows only your origin, fixes the model and caps answers. Then `data-endpoint="https://murmur-proxy.you.workers.dev/v1"`.
 - **In the browser.** [LFM3 1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B) (Liquid AI, October 2026) runs on WebGPU through Transformers.js; questions never leave the device. `data-preload` sets when its ~1.1 GB downloads: `question` (default, with a discreet progress bar), `open` (bubble opened), `idle` (page idle) or `consent` (after a prompt). The weights stay in the browser's cache with persistent storage requested, and a cached model is prepared in the background on the next visit.
 - **The visitor's key.** The AI settings, built on llm-connect's store: provider and model from the [llm-models](https://github.com/maxgfr/llm-models) catalog, the key encrypted with AES-GCM under a non-extractable browser key and sent only to that provider, or a local Ollama / LM Studio.
-- **Your key in the page.** `data-api-key` with `data-provider` answers everyone with your key. Anyone can read it: only a key with a spending limit.
 
 ## npm package
 

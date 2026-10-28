@@ -1,5 +1,5 @@
 import type { LlmSettingsState, LlmSettingsStore } from "../llm/index";
-import { cleanAnswer, passageHref } from "../rag/ground";
+import { citedSources, cleanAnswer, passageHref } from "../rag/ground";
 import { type Messages, messagesFor, pickLanguage } from "./i18n";
 import { icon } from "./icons";
 import { renderMarkdown } from "./markdown";
@@ -333,13 +333,18 @@ export class MurmurChat extends Base {
       return;
     }
     const passages = turn.passages ?? [];
+    const content = cleanAnswer(turn.content);
+    // Sources are numbered 1, 2, 3 in the order the answer first cites them, whatever their
+    // place among the passages the model was given.
+    const order = citedSources(content, passages.length);
+    const label = (n: number) => order.indexOf(n) + 1;
     const body = el(doc, "div");
-    renderMarkdown(body, cleanAnswer(turn.content), (n) => {
+    renderMarkdown(body, content, (n) => {
       const p = passages[n - 1];
-      if (!p) return null;
+      if (!p || !label(n)) return null;
       const a = el(doc, "a", { class: "cite", href: passageHref(p) });
-      a.textContent = String(n);
-      a.setAttribute("aria-label", `${this.t.sources} ${n}: ${p.title}`);
+      a.textContent = String(label(n));
+      a.setAttribute("aria-label", `${this.t.sources} ${label(n)}: ${p.title}`);
       return a;
     });
     const parts: Node[] = [body];
@@ -351,7 +356,7 @@ export class MurmurChat extends Base {
       );
       parts.push(status);
     }
-    const cited = turn.cited ?? [];
+    const cited = order;
     if (finished && cited.length) {
       parts.push(text(doc, "p", this.t.sources, "sources-label"));
       const list = el(doc, "ol", { class: "sources" });
@@ -360,7 +365,7 @@ export class MurmurChat extends Base {
         if (!p) continue;
         const li = el(doc, "li");
         const a = el(doc, "a", { href: passageHref(p) });
-        const ring = text(doc, "span", String(n), "cite");
+        const ring = text(doc, "span", String(label(n)), "cite");
         ring.setAttribute("aria-hidden", "true");
         const where = el(doc, "span", { class: "where" });
         where.append(doc.createTextNode(p.title || p.url));

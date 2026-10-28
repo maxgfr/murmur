@@ -84,7 +84,6 @@
                   <label><input type="radio" name="mode" value="local" /><span>{{wire.modeLocal}}<small>{{wire.modeLocalHint}}</small></span></label>
                   <label><input type="radio" name="mode" value="auto" /><span>{{wire.modeAuto}}<small>{{wire.modeAutoHint}}</small></span></label>
                   <label><input type="radio" name="mode" value="key" /><span>{{wire.modeVisitor}}<small>{{wire.modeVisitorHint}}</small></span></label>
-                  <label><input type="radio" name="mode" value="owner" /><span>{{wire.modeOwner}}<small>{{wire.modeOwnerHint}}</small></span></label>
                 </div>
               </fieldset>
               <label data-when="local auto" hidden><span>{{wire.preload}}</span><select name="preload">
@@ -93,9 +92,7 @@
                 <option value="idle">{{wire.preloadIdle}}</option>
                 <option value="consent">{{wire.preloadConsent}}</option>
               </select></label>
-              <label data-when="owner" hidden><span>{{wire.apiKey}}</span><input type="text" name="apiKey" autocomplete="off" spellcheck="false" placeholder="sk-or-…" /></label>
-              <p class="warn" data-when="owner" hidden>{{wire.ownerWarn}}</p>
-              <div class="pair" data-when="auto key owner" hidden>
+              <div class="pair" data-when="auto key" hidden>
                 <label><span>{{wire.provider}}</span><select name="provider"><option value="">{{wire.providerAny}}</option></select></label>
                 <label><span>{{wire.model}}</span><input type="text" name="model" list="models" autocomplete="off" placeholder="{{wire.modelPlaceholder}}" /><datalist id="models"></datalist></label>
               </div>
