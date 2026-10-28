@@ -71,8 +71,15 @@ describe("extractSections edge cases", () => {
   test("skips hidden content and makes duplicate anchors unique", () => {
     const html = `<main><h2>Same</h2><p>one</p><p hidden>gone</p><p aria-hidden="true">gone too</p><h2>Same</h2><p>two</p></main>`;
     const { sections } = extractSections(parseHtml(html));
-    expect(sections.map((s) => s.anchor)).toEqual(["same", "same-"]);
+    expect(sections.map((s) => s.anchor)).toEqual(["same", "same-1"]);
     expect(sections.map((s) => s.text).join(" ")).not.toContain("gone");
+  });
+  test("a heading without id links to its section's real id, even when shared", () => {
+    const html = `<main><section id="keys"><h2>Keys</h2><p>a</p><h3>Proxy</h3><p>b</p></section></main>`;
+    expect(extractSections(parseHtml(html)).sections.map((s) => s.anchor)).toEqual([
+      "keys",
+      "keys",
+    ]);
   });
   test("follows a custom content root and falls back to the body", () => {
     const html = `<body><div class="content"><h2>In</h2><p>kept</p></div><p>outside</p></body>`;

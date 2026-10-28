@@ -108,7 +108,11 @@ describe("retriever edge cases", () => {
         url: `/p${i}`,
         title: `Page ${i}`,
         sections: [
-          { heading: "", anchor: "", text: i === 7 ? "refund policy refund" : `refund note ${i}` },
+          {
+            heading: "",
+            anchor: "",
+            text: i === 7 ? "refund policy" : i % 2 ? `shipping info ${i}` : `refund note ${i}`,
+          },
         ],
       })),
     );
@@ -126,5 +130,15 @@ describe("splitText edge cases", () => {
   test("empty and whitespace text give no passage", () => {
     expect(splitText("")).toEqual([]);
     expect(splitText("\n\n   \n")).toEqual([]);
+  });
+});
+
+describe("retriever relevance", () => {
+  test("stopwords alone match nothing", async () => {
+    expect(await bm25Retriever(index).search("what is the")).toEqual([]);
+    expect(await bm25Retriever(index).search("quel est le")).toEqual([]);
+  });
+  test("an off-topic question finds nothing on the site", async () => {
+    expect(await bm25Retriever(index).search("What is the capital of Peru?")).toEqual([]);
   });
 });

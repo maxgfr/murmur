@@ -35,7 +35,7 @@ export function extractSections(
 
   const sections: Section[] = [];
   let cur: Section = { heading: "", anchor: "", text: "" };
-  const used = new Set<string>();
+  const slugs = new Map<string, number>();
 
   const walk = (node: Node) => {
     if (node.nodeType === 3) {
@@ -49,9 +49,15 @@ export function extractSections(
     if (/^H[1-3]$/.test(tag)) {
       sections.push(cur);
       const heading = (el.textContent ?? "").replace(/\s+/g, " ").trim();
-      let anchor = el.id || el.closest("[id]")?.id || slugify(heading);
-      while (used.has(anchor)) anchor += "-";
-      used.add(anchor);
+      // A real id (the heading's, else its section's) is linkable as is, even when shared;
+      // a slug made from the text is numbered on repeats, as GitHub does.
+      let anchor = el.id || el.closest("[id]")?.id || "";
+      if (!anchor) {
+        const base = slugify(heading);
+        const n = slugs.get(base) ?? 0;
+        slugs.set(base, n + 1);
+        anchor = n ? `${base}-${n}` : base;
+      }
       cur = { heading, anchor, text: "" };
       return;
     }
