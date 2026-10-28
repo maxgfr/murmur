@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="{{lang}}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{meta.title}}</title>
+    <meta name="description" content="{{meta.description}}" />
+    <meta property="og:title" content="{{meta.title}}" />
+    <meta property="og:description" content="{{meta.description}}" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#1c1814" />
+    <link rel="alternate" hreflang="en" href="{{lang-url:en}}" />
+    <link rel="alternate" hreflang="fr" href="{{lang-url:fr}}" />
+    <link rel="icon" href="{{src}}static/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="{{src}}fonts/sofia-sans-condensed-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="{{src}}styles/site.css" />
+    <script>
+      try {
+        var pick = localStorage.getItem("murmur-site-lang");
+        var want = pick || ((navigator.language || "").toLowerCase().startsWith("fr") ? "fr" : "en");
+        if (want !== "{{lang}}" && !pick && !sessionStorage.getItem("murmur-site-redirected")) {
+          sessionStorage.setItem("murmur-site-redirected", "1");
+          location.replace(document.querySelector('link[hreflang="' + want + '"]').href);
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body data-page="home" data-root="{{root}}">
+    <a class="skip" href="#ask">{{nav.skip}}</a>
+    <header class="rail">
+      <a class="wordmark" href="{{root}}"><span class="lamp on" aria-hidden="true"></span>murmur</a>
+      <nav aria-label="{{nav.label}}">
+        <a href="{{root}}guide.html">{{nav.guide}}</a>
+        <a href="{{root}}playground.html">{{nav.playground}}</a>
+        <a href="https://github.com/maxgfr/murmur">GitHub</a>
+        <a href="https://www.npmjs.com/package/murmur-rag">npm</a>
+        <a class="lang keep" href="{{nav.langPrefix}}" hreflang="{{nav.langCode}}" lang="{{nav.langCode}}">{{nav.langLabel}}</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="board" aria-labelledby="ask-title">
+        <div class="console" id="ask">
+          <h1 id="ask-title">{{board.title}}</h1>
+          <p class="lede">{{board.lede}}</p>
+          <div class="handset" id="handset"></div>
+          <ul class="prompts" aria-label="{{board.promptsLabel}}">
+            <li><button type="button">{{board.q1}}</button></li>
+            <li><button type="button">{{board.q2}}</button></li>
+            <li><button type="button">{{board.q3}}</button></li>
+          </ul>
+          <p class="note">{{board.note}}</p>
+        </div>
+
+        <div class="field-board">
+          <div class="jackfield" id="jackfield" aria-live="polite">
+            <p class="note">{{field.loading}}</p>
+          </div>
+          <ol class="oplog" id="oplog" aria-label="{{field.logLabel}}">
+            <li><time>--:--</time><span>{{field.strip}}</span></li>
+            <li><time>--:--</time><span>{{field.idle}}</span></li>
+          </ol>
+          <svg class="cords" id="cords" aria-hidden="true"></svg>
+        </div>
+      </section>
+
+      <div class="snippet">
+        <span class="label">{{snippet.label}}</span>
+        <pre><code id="hero-snippet">&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"&gt;&lt;/script&gt;</code></pre>
+        <button class="copy" type="button" data-copy="hero-snippet">{{snippet.copy}}</button>
+      </div>
+
+      <section class="line" id="wire" aria-labelledby="wire-title">
+        <div class="wrap">
+          <h2 class="plate" id="wire-title">{{wire.title}}</h2>
+          <p class="intro">{{wire.intro}}</p>
+          <div class="wire">
+            <form id="configurator" novalidate>
+              <p class="strip">{{wire.groupKey}}</p>
+              <fieldset>
+                <legend class="sr">{{wire.mode}}</legend>
+                <div class="toggle">
+                  <label><input type="radio" name="mode" value="visitor" checked /><span>{{wire.modeVisitor}}<small>{{wire.modeVisitorHint}}</small></span></label>
+                  <label><input type="radio" name="mode" value="proxy" /><span>{{wire.modeProxy}}<small>{{wire.modeProxyHint}}</small></span></label>
+                </div>
+              </fieldset>
+              <div class="pair" data-when="visitor">
+                <label><span>{{wire.provider}}</span><select name="provider"><option value="">{{wire.providerAny}}</option></select></label>
+                <label><span>{{wire.model}}</span><input type="text" name="model" list="models" autocomplete="off" placeholder="{{wire.modelPlaceholder}}" /><datalist id="models"></datalist></label>
+              </div>
+              <div class="pair" data-when="proxy" hidden>
+                <label><span>{{wire.endpoint}}</span><input type="url" name="endpoint" placeholder="https://murmur-proxy.you.workers.dev/v1" /></label>
+                <label><span>{{wire.proxyModel}}</span><input type="text" name="proxyModel" autocomplete="off" placeholder="openai/gpt-5-mini" /></label>
+              </div>
+              <p class="hint" data-when="proxy" hidden>{{wire.proxyHint}}</p>
+              <p class="strip">{{wire.groupContent}}</p>
+              <label><span>{{wire.index}}</span><input type="text" name="index" placeholder="/murmur-index.json" /><small>{{wire.indexHint}}</small></label>
+              <div class="pair">
+                <label><span>{{wire.titleField}}</span><input type="text" name="title" placeholder="{{wire.titlePlaceholder}}" /></label>
+                <label><span>{{wire.language}}</span><select name="lang"><option value="">{{wire.langAuto}}</option><option value="en">English</option><option value="fr">Français</option></select></label>
+              </div>
+              <label><span>{{wire.greeting}}</span><textarea name="greeting" rows="2" placeholder="{{wire.greetingPlaceholder}}"></textarea></label>
+              <label><span>{{wire.instructions}}</span><textarea name="instructions" rows="2" placeholder="{{wire.instructionsPlaceholder}}"></textarea></label>
+              <p class="strip">{{wire.groupLook}}</p>
+              <div class="pair">
+                <label><span>{{wire.position}}</span><select name="position"><option value="">{{wire.right}}</option><option value="bottom-left">{{wire.left}}</option></select></label>
+                <label><span>{{wire.accent}}</span><span class="swatch"><input type="color" name="accent" value="#1c1814" aria-label="{{wire.accent}}" /><input type="text" name="accentText" value="" placeholder="#1c1814" aria-label="{{wire.accent}}" /></span></label>
+              </div>
+            </form>
+            <div class="output">
+              <div class="panel">
+                <pre><code id="wire-snippet"></code></pre>
+                <div class="bar">
+                  <span class="lamp" id="wire-lamp" aria-hidden="true"></span>
+                  <button class="ghost-btn" type="button" id="try">{{wire.try}}</button>
+                  <button class="copy" type="button" data-copy="wire-snippet">{{snippet.copy}}</button>
+                </div>
+              </div>
+              <p class="warn" id="wire-warn" hidden></p>
+              <p class="hint">{{wire.after}}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="line" id="how" aria-labelledby="how-title">
+        <div class="wrap">
+          <h2 class="plate" id="how-title">{{how.title}}</h2>
+          <p class="intro">{{how.intro}}</p>
+          <ol class="circuit">
+            <li><span class="jack" aria-hidden="true"></span><h3>{{how.s1title}}</h3><p><strong>{{how.s1where}}.</strong> {{how.s1text}}</p></li>
+            <li><span class="jack" aria-hidden="true"></span><h3>{{how.s2title}}</h3><p><strong>{{how.s2where}}.</strong> {{how.s2text}}</p></li>
+            <li><span class="jack" aria-hidden="true"></span><h3>{{how.s3title}}</h3><p><strong>{{how.s3where}}.</strong> {{how.s3text}}</p></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="line" id="keys" aria-labelledby="keys-title">
+        <div class="wrap">
+          <h2 class="plate" id="keys-title">{{keys.title}}</h2>
+          <p class="intro">{{keys.intro}}</p>
+          <div class="modes">
+            <article class="mode dark">
+              <h3><span class="lamp on" aria-hidden="true"></span>{{keys.proxyTitle}}</h3>
+              <p>{{keys.proxyText}}</p>
+              <pre><code>data-endpoint="https://murmur-proxy.you.workers.dev/v1"</code></pre>
+              <p><a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">{{keys.proxyLink}}</a></p>
+            </article>
+            <article class="mode">
+              <h3><span class="lamp" aria-hidden="true"></span>{{keys.visitorTitle}}</h3>
+              <p>{{keys.visitorText}}</p>
+              <pre><code>data-provider="openrouter" data-model="…"</code></pre>
+              <p><a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">{{keys.visitorLink}}</a></p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="line" id="npm" aria-labelledby="npm-title">
+        <div class="wrap">
+          <h2 class="plate" id="npm-title">{{npm.title}}</h2>
+          <p class="intro">{{npm.intro}}</p>
+          <div class="dev">
+            <dl>
+              <div><dt>murmur-rag</dt><dd>{{npm.root}}</dd></div>
+              <div><dt>murmur-rag/rag</dt><dd>{{npm.rag}}</dd></div>
+              <div><dt>murmur-rag/indexer</dt><dd>{{npm.indexer}}</dd></div>
+              <div><dt>murmur-rag/llm</dt><dd>{{npm.llm}}</dd></div>
+              <div><dt>murmur-rag/widget</dt><dd>{{npm.widget}}</dd></div>
+              <div><dt>npx murmur-rag index</dt><dd>{{npm.cli}}</dd></div>
+            </dl>
+            <pre class="code"><code><span class="c"># {{npm.c1}}</span>
+npm install murmur-rag
+npx murmur-rag index ./dist --out ./dist/murmur-index.json
+
+<span class="c">// {{npm.c2}}</span>
+<span class="k">import</span> { mountMurmur } <span class="k">from</span> <span class="s">"murmur-rag/widget"</span>;
+mountMurmur({ index: <span class="s">"/murmur-index.json"</span>, llm: { provider: <span class="s">"anthropic"</span> } });
+
+<span class="c">// {{npm.c3}}</span>
+<span class="k">import</span> { createMurmur } <span class="k">from</span> <span class="s">"murmur-rag"</span>;
+<span class="k">const</span> murmur = createMurmur({ index, model });
+<span class="k">const</span> answer = <span class="k">await</span> murmur.ask(<span class="s">"{{npm.c3q}}"</span>);
+<span class="k">for await</span> (<span class="k">const</span> part <span class="k">of</span> answer.textStream) render(part);</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="line" id="limits" aria-labelledby="limits-title">
+        <div class="wrap">
+          <h2 class="plate" id="limits-title">{{limits.title}}</h2>
+          <ul class="limits">
+            <li><span class="lamp" aria-hidden="true"></span><div><b>{{limits.l1}}</b><span>{{limits.l1text}}</span></div></li>
+            <li><span class="lamp" aria-hidden="true"></span><div><b>{{limits.l2}}</b><span>{{limits.l2text}}</span></div></li>
+            <li><span class="lamp" aria-hidden="true"></span><div><b>{{limits.l3}}</b><span>{{limits.l3text}}</span></div></li>
+            <li><span class="lamp" aria-hidden="true"></span><div><b>{{limits.l4}}</b><span>{{limits.l4text}}</span></div></li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <a class="wordmark" href="{{root}}"><span class="lamp on" aria-hidden="true"></span>murmur</a>
+      <span>{{foot.made}} <a href="https://github.com/maxgfr">maxgfr</a> · MIT</span>
+      <a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">llm-connect</a>
+      <a href="https://maxgfr.github.io/ephemeral/">ephemeral</a>
+    </footer>
+    <script type="application/json" id="i18n">{{i18n-json}}</script>
+    <script type="module" src="{{src}}scripts/home.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,122 @@
+        <h1>Guide de murmur</h1>
+        <p class="lead">Tout pour ajouter murmur à un site, choisir comment l'IA est appelée, indexer vos pages et utiliser le paquet npm.</p>
+
+        <h2 id="demarrage-rapide">Démarrage rapide</h2>
+        <p>Collez cette ligne avant <code>&lt;/body&gt;</code> sur chaque page de votre site :</p>
+        <pre><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"&gt;&lt;/script&gt;</code></pre>
+        <p>Une bulle apparaît en bas à droite. Sans option, elle répond à partir du texte de la page que lit le visiteur, et chaque visiteur utilise sa propre clé d'IA. Pour répondre à partir de tout le site, construisez un index (voir <a href="#indexer-votre-site">Indexer votre site</a>) ; pour épargner la clé aux visiteurs, passez par un proxy (voir <a href="#modeles-et-cles">Modèles d'IA et clés</a>).</p>
+        <p>Le <a href="./#wire">configurateur de la page d'accueil</a> écrit la ligne pour vous.</p>
+
+        <h2 id="options">Options</h2>
+        <p>Chaque option est un attribut <code>data-</code> de la balise script. Toutes sont facultatives.</p>
+        <table>
+          <thead><tr><th>Attribut</th><th>Effet</th></tr></thead>
+          <tbody>
+            <tr><td><code>data-index</code></td><td>URL du fichier d'index écrit par <code>murmur index</code>, par exemple <code>/murmur-index.json</code>. Sans lui, le widget lit la page courante.</td></tr>
+            <tr><td><code>data-endpoint</code></td><td>URL de votre proxy compatible OpenAI (https). Les visiteurs discutent alors sans clé.</td></tr>
+            <tr><td><code>data-provider</code></td><td>Fournisseur présélectionné pour les visiteurs qui apportent leur clé : <code>openai</code>, <code>anthropic</code>, <code>google</code>, <code>mistral</code>, <code>openrouter</code>, <code>groq</code>…</td></tr>
+            <tr><td><code>data-model</code></td><td>Identifiant du modèle : celui présélectionné pour les visiteurs, ou celui demandé à votre proxy.</td></tr>
+            <tr><td><code>data-instructions</code></td><td>Vos consignes à l'assistant : qui il est, son ton, ce dont il ne doit pas parler.</td></tr>
+            <tr><td><code>data-title</code>, <code>data-greeting</code>, <code>data-placeholder</code>, <code>data-button</code></td><td>Le titre du panneau, le premier message, le texte indicatif du champ et le libellé de la bulle.</td></tr>
+            <tr><td><code>data-lang</code></td><td>Langue de l'interface et des réponses : <code>fr</code> ou <code>en</code>. Par défaut, le <code>lang</code> de la page, puis celui du navigateur.</td></tr>
+            <tr><td><code>data-position</code></td><td><code>bottom-right</code> (par défaut) ou <code>bottom-left</code>.</td></tr>
+            <tr><td><code>data-accent</code></td><td>N'importe quelle couleur CSS pour la bulle, l'en-tête et les messages du visiteur.</td></tr>
+            <tr><td><code>data-theme</code></td><td><code>auto</code> (par défaut, suit le système), <code>light</code> ou <code>dark</code>.</td></tr>
+            <tr><td><code>data-open</code></td><td><code>true</code> ouvre le panneau au chargement.</td></tr>
+            <tr><td><code>data-storage-key</code></td><td>Préfixe de ce que le widget enregistre, pour séparer deux widgets sur un même domaine.</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="indexer-votre-site">Indexer votre site</h2>
+        <p>L'index est un fichier JSON de vos pages découpées en passages sous leurs titres. Construisez-le à partir du dossier de sortie de votre site, après votre générateur de site statique :</p>
+        <pre><code>npx murmur-rag index ./dist --out ./dist/murmur-index.json</code></pre>
+        <p>Il lit tous les fichiers <code>.html</code>, <code>.md</code> et <code>.txt</code>. Dans le HTML, il garde le contenu de <code>main</code> (ou <code>article</code>, ou <code>body</code>) et ignore la navigation, les en-têtes, pieds de page, formulaires et scripts. Ajoutez <code>data-murmur-ignore</code> à tout élément à laisser de côté.</p>
+        <table>
+          <thead><tr><th>Option</th><th>Effet</th></tr></thead>
+          <tbody>
+            <tr><td><code>--out</code></td><td>Où écrire l'index (par défaut <code>murmur-index.json</code>).</td></tr>
+            <tr><td><code>--base</code></td><td>Préfixe d'URL des pages, pour un site servi sous un sous-chemin comme <code>/docs/</code>.</td></tr>
+            <tr><td><code>--root</code></td><td>Sélecteur CSS du contenu de chaque page.</td></tr>
+            <tr><td><code>--exclude</code></td><td>Sélecteurs CSS à ignorer, en plus de ceux par défaut.</td></tr>
+            <tr><td><code>--max-chunk</code></td><td>Longueur maximale d'un passage en caractères (2000 par défaut).</td></tr>
+          </tbody>
+        </table>
+        <p>La commande accepte aussi un site en ligne : <code>npx murmur-rag index https://exemple.fr/sitemap.xml</code> récupère toutes les pages du sitemap.</p>
+        <h3 id="dans-une-github-action">Dans une GitHub Action</h3>
+        <p>Ajoutez une étape après votre build, avant l'envoi de l'artefact Pages :</p>
+        <pre><code>- run: npx murmur-rag index ./_site --base /mon-depot/ --out ./_site/murmur-index.json</code></pre>
+
+        <h2 id="modeles-et-cles">Modèles d'IA et clés</h2>
+        <p>Une clé écrite dans une page web est lisible par tout le monde : murmur ne vous demande donc jamais d'en mettre une. Choisissez l'une des deux façons.</p>
+        <h3 id="votre-proxy">Votre proxy garde la clé</h3>
+        <p>Déployez le <a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">Worker Cloudflare d'exemple</a>. Il garde votre clé en secret, transmet les requêtes de chat à n'importe quelle API compatible OpenAI (OpenRouter, OpenAI, Groq, Mistral…), n'accepte que l'origine de votre site, fixe le modèle et plafonne la longueur de chaque réponse. Ensuite :</p>
+        <pre><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
+  data-endpoint="https://murmur-proxy.vous.workers.dev/v1" data-model="openai/gpt-5-mini"&gt;&lt;/script&gt;</code></pre>
+        <p>Fixez une limite de dépenses chez votre fournisseur : quiconque peut ouvrir votre site peut utiliser votre proxy.</p>
+        <h3 id="cle-du-visiteur">Chaque visiteur apporte sa clé</h3>
+        <p>Sans <code>data-endpoint</code>, la première question ouvre les réglages IA : le visiteur choisit un fournisseur et un modèle, colle une clé, la teste et enregistre. <a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">llm-connect</a> chiffre la clé en AES-GCM sous une clé que la page ne peut pas exporter, la garde dans le navigateur (pour la session, ou sur l'appareil si le visiteur le demande) et ne l'envoie qu'au fournisseur choisi. Le visiteur peut aussi brancher le widget sur Ollama ou LM Studio sur sa propre machine.</p>
+        <p>Le navigateur appelle directement le fournisseur, qui doit donc accepter les appels depuis une page web (CORS) : c'est le cas d'OpenAI, Anthropic, Google, Mistral, OpenRouter, Groq, Together, DeepInfra, xAI et des serveurs locaux avec CORS activé.</p>
+
+        <h2 id="paquet-npm">Paquet npm</h2>
+        <pre><code>npm install murmur-rag</code></pre>
+        <p>Le paquet est découpé pour ne prendre que ce dont vous avez besoin :</p>
+        <table>
+          <thead><tr><th>Import</th><th>Contenu</th></tr></thead>
+          <tbody>
+            <tr><td><code>murmur-rag</code></td><td><code>createMurmur</code>, le moteur sans interface, plus tout <code>/rag</code>.</td></tr>
+            <tr><td><code>murmur-rag/rag</code></td><td><code>bm25Retriever</code>, <code>buildIndex</code>, <code>splitText</code>, <code>formatSources</code>, <code>citedSources</code>, l'interface <code>Retriever</code>.</td></tr>
+            <tr><td><code>murmur-rag/indexer</code></td><td><code>indexPages</code>, <code>indexDocument</code>, <code>extractSections</code>.</td></tr>
+            <tr><td><code>murmur-rag/llm</code></td><td><code>proxySettings</code>, <code>visitorStore</code>, <code>resolveSettings</code>, au-dessus de llm-connect.</td></tr>
+            <tr><td><code>murmur-rag/widget</code></td><td><code>mountMurmur</code>, <code>defineMurmurChat</code>, <code>MurmurChat</code>, <code>renderMarkdown</code>.</td></tr>
+            <tr><td><code>murmur-rag/embed</code></td><td>L'entrée de la balise script : lit les attributs <code>data-</code> et monte la bulle.</td></tr>
+          </tbody>
+        </table>
+        <h3 id="sans-interface">Sans interface</h3>
+        <pre><code>import { createMurmur } from "murmur-rag";
+import { anthropic } from "@ai-sdk/anthropic";
+
+const murmur = createMurmur({ index, model: anthropic("claude-sonnet-5-5"), language: "fr" });
+const answer = await murmur.ask("Que comprend l'offre Pro ?");
+for await (const part of answer.textStream) process.stdout.write(part);
+const { cited } = await answer.done; // numéros des passages cités</code></pre>
+        <h3 id="votre-propre-retriever">Votre propre retriever</h3>
+        <p>Tout objet doté de <code>search(query, { limit, budgetTokens })</code> qui renvoie des passages remplace BM25 : un index d'embeddings, une API de recherche, une base de données.</p>
+        <pre><code>const retriever = {
+  async search(query) {
+    const hits = await maRecherche(query);
+    return hits.map((h) => ({ doc: 0, url: h.url, title: h.title, heading: "", anchor: "", text: h.text }));
+  },
+};
+mountMurmur({ retriever, llm: { endpoint: "https://proxy.exemple.fr/v1" } });</code></pre>
+
+        <h2 id="style-et-evenements">Style et événements</h2>
+        <p>Le widget vit dans un Shadow DOM : votre CSS ne peut pas le casser et le sien ne déborde pas sur votre page. Changez son style par des propriétés personnalisées sur <code>murmur-chat</code> :</p>
+        <pre><code>murmur-chat {
+  --murmur-accent: #0b5cad;
+  --murmur-accent-ink: #ffffff;
+  --murmur-font: "Inter", sans-serif;
+  --murmur-radius: 12px;
+  --murmur-z: 1000;
+}</code></pre>
+        <p>Il émet un événement <code>murmur:state</code> à chaque étape (<code>searching</code>, <code>streaming</code>, <code>done</code>, <code>error</code>) avec les passages trouvés et ceux cités : le standard de la page d'accueil est dessiné à partir de lui.</p>
+        <pre><code>document.querySelector("murmur-chat").addEventListener("murmur:state", (e) =&gt; {
+  console.log(e.detail.state, e.detail.passages, e.detail.cited);
+});</code></pre>
+
+        <h2 id="vie-privee-et-securite">Vie privée et sécurité</h2>
+        <ul>
+          <li>murmur n'a pas de serveur et ne collecte rien. La question et les passages correspondants partent chez le fournisseur d'IA que vous ou le visiteur avez choisi, et nulle part ailleurs.</li>
+          <li>La conversation est gardée dans l'onglet (<code>sessionStorage</code>) pour survivre à un clic sur une source ; elle disparaît à la fermeture de l'onglet.</li>
+          <li>Les réponses sont affichées comme du texte : ce qu'écrit le modèle ne devient jamais du HTML dans votre page, et les liens sont limités aux URL http, https et relatives.</li>
+          <li>Les passages sont envoyés au modèle comme des données citées, avec l'instruction de ne jamais suivre les ordres qu'elles contiennent.</li>
+        </ul>
+
+        <h2 id="faq">FAQ</h2>
+        <h3 id="ca-marche-sur-github-pages">Ça marche sur GitHub Pages ?</h3>
+        <p>Oui : murmur, ce sont des fichiers statiques. Ce site est sur GitHub Pages et sa bulle répond à partir de son propre index, construit dans son workflow de déploiement.</p>
+        <h3 id="quel-modele-choisir">Quel modèle choisir ?</h3>
+        <p>Un modèle rapide et peu cher suffit : le travail consiste à lire quelques passages et à les résumer. Les réglages proposent le modèle recommandé de chaque fournisseur.</p>
+        <h3 id="et-si-la-reponse-nest-pas-sur-mon-site">Et si la réponse n'est pas sur mon site ?</h3>
+        <p>L'assistant a pour consigne de le dire et d'indiquer où chercher, plutôt que d'inventer. Si aucun passage ne correspond à la question, il en est informé.</p>
+        <h3 id="la-recherche-sans-ia">Peut-on utiliser la recherche sans IA ?</h3>
+        <p>Oui : <code>bm25Retriever(index).search(query)</code> de <code>murmur-rag/rag</code> renvoie les passages correspondants avec leurs liens, de quoi faire une simple recherche sur le site.</p>

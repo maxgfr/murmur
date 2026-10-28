@@ -1,0 +1,1267 @@
+@font-face {
+  font-family: "Sofia Sans";
+  src: url("../fonts/sofia-sans-latin.woff2") format("woff2");
+  font-weight: 1 1000;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Sofia Sans";
+  src: url("../fonts/sofia-sans-latin-ext.woff2") format("woff2");
+  font-weight: 1 1000;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+20A0-20AB, U+20AD-20C4, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Sofia Sans Condensed";
+  src: url("../fonts/sofia-sans-condensed-latin.woff2") format("woff2");
+  font-weight: 1 1000;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Sofia Sans Condensed";
+  src: url("../fonts/sofia-sans-condensed-latin-ext.woff2") format("woff2");
+  font-weight: 1 1000;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+20A0-20AB, U+20AD-20C4, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  /* Switchboard: ivory enamel panel, black bakelite, brass, amber lamps, braided cords. */
+  --ivory: #efe7d4;
+  --ivory-deep: #e4d9c0;
+  --ivory-line: #d3c5a6;
+  --bakelite: #1c1814;
+  --bakelite-2: #2b251f;
+  --bakelite-ink: #efe7d4;
+  --bakelite-muted: #b3a68d;
+  --brass: #b0843a;
+  --brass-hi: #dcb469;
+  --brass-ink: #7a571d;
+  --lamp: #e9a63a;
+  --cord: #a3321f;
+  --cord-dark: #6e2013;
+  --ink: #1f1a15;
+  --muted: #5c5145;
+  --focus: #a3321f;
+
+  --u: 8px; /* one module: the jack pitch is 6u */
+  --jack: calc(var(--u) * 6);
+  --radius: 14px;
+  --display: "Sofia Sans Condensed", "Arial Narrow", sans-serif;
+  --text: "Sofia Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--u) * 10);
+}
+body {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--text);
+  font-size: 17px;
+  line-height: 1.6;
+  font-feature-settings: "kern", "liga";
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: color-mix(in oklab, var(--lamp) 55%, transparent);
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+a:hover {
+  text-decoration-color: var(--cord);
+}
+img,
+svg {
+  display: block;
+}
+code,
+pre,
+kbd {
+  font-family: var(--mono);
+  font-size: 0.88em;
+}
+p code,
+li code,
+td code {
+  background: var(--ivory-deep);
+  padding: 0.08em 0.36em;
+  border-radius: 4px;
+}
+html {
+  scrollbar-color: var(--ivory-line) var(--ivory);
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip {
+  position: absolute;
+  left: var(--u);
+  top: var(--u);
+  z-index: 10;
+  padding: var(--u) calc(var(--u) * 2);
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+  transform: translateY(-200%);
+}
+.skip:focus {
+  transform: none;
+}
+
+/* Designation strip: the engraved bakelite label every zone wears. */
+.strip {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.5);
+  margin: 0;
+  padding: calc(var(--u) * 0.75) calc(var(--u) * 2);
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 4px;
+}
+.strip::before,
+.strip::after {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brass);
+  box-shadow: inset 0 0 0 1.5px #6f5222;
+}
+.strip::after {
+  margin-left: auto;
+}
+.strip b {
+  color: var(--lamp);
+  font-weight: 700;
+}
+
+/* Top rail */
+.rail {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  padding: 0 clamp(16px, 4vw, 48px);
+  height: calc(var(--u) * 8);
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+}
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--u);
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+.wordmark .lamp {
+  width: 10px;
+  height: 10px;
+}
+.rail nav {
+  display: flex;
+  gap: calc(var(--u) * 0.5);
+  margin-left: auto;
+  align-items: center;
+}
+.rail nav a {
+  padding: calc(var(--u) * 0.75) calc(var(--u) * 1.5);
+  border-radius: 6px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--bakelite-muted);
+}
+.rail nav a:hover,
+.rail nav a[aria-current="page"] {
+  color: var(--bakelite-ink);
+  background: var(--bakelite-2);
+}
+.rail nav .lang {
+  margin-left: var(--u);
+  color: var(--bakelite-ink);
+  box-shadow: inset 0 0 0 1px var(--bakelite-2);
+}
+.rail :focus-visible {
+  outline-color: var(--lamp);
+}
+
+/* Lamps and jacks */
+.lamp {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--muted) 70%, transparent);
+  flex: none;
+}
+.lamp.on {
+  background: var(--lamp);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--lamp) 30%, transparent);
+}
+.rail .lamp,
+.strip .lamp {
+  box-shadow: inset 0 0 0 1.5px var(--bakelite-muted);
+}
+.rail .lamp.on,
+.strip .lamp.on {
+  background: var(--lamp);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--lamp) 35%, transparent);
+}
+.lamp.blink {
+  animation: blink 1s steps(2, jump-none) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.jack {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--brass);
+  box-shadow: inset 0 0 0 1.5px #6f5222;
+}
+/* A jack is geometry, not a picture: a flat brass ring around a dark bore. */
+.jack::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: #0d0b09;
+  box-shadow: 0 0 0 2px #2a241e;
+}
+.jack.ghost {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--ivory-line);
+}
+/* A patched jack holds the plug: bakelite head in a brass collar. */
+.socket.patched .jack::after {
+  inset: 4px;
+  background: var(--bakelite);
+  box-shadow: 0 0 0 2.5px var(--brass-hi);
+}
+.jack.ghost::after {
+  background: var(--ivory-line);
+  box-shadow: none;
+}
+
+/* Board: the first viewport */
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  min-height: calc(100svh - var(--u) * 17);
+}
+.console {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 4) clamp(16px, 3.5vw, 48px) calc(var(--u) * 3);
+  background: color-mix(in oklab, var(--ivory) 55%, #fbf8f1);
+  border-right: 1px solid var(--ivory-line);
+}
+.console h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 4.4vw, 4rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.console .lede {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 18px;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+.handset {
+  position: relative;
+  height: clamp(300px, calc(100svh - 600px), 480px);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fbf8f1;
+  box-shadow:
+    0 1px 0 var(--ivory),
+    0 18px 40px -18px rgb(28 24 20 / 0.45),
+    inset 0 0 0 1px var(--ivory-line);
+}
+.handset murmur-chat {
+  --murmur-accent: var(--bakelite);
+  --murmur-font: var(--text);
+  --murmur-radius: var(--radius);
+  --murmur-lamp: var(--lamp);
+}
+.prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--u);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.prompts button {
+  padding: calc(var(--u) * 0.75) calc(var(--u) * 1.5);
+  border: 0;
+  border-radius: 999px;
+  background: var(--ivory);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ivory-line);
+  font: 500 15px / 1.3 var(--text);
+  cursor: pointer;
+  transition:
+    background 160ms,
+    box-shadow 160ms;
+}
+.prompts button:hover {
+  background: #fbf8f1;
+  box-shadow: inset 0 0 0 1px var(--brass);
+}
+.note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field-board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--u) * 4) clamp(16px, 3.5vw, 48px) calc(var(--u) * 3);
+  gap: calc(var(--u) * 3);
+}
+.field-board h2 {
+  margin: 0;
+}
+.field-board > .strip {
+  font-size: 13px;
+}
+.jackfield {
+  display: grid;
+  gap: calc(var(--u) * 2.5);
+  align-content: start;
+  position: relative;
+  z-index: 1;
+}
+.row {
+  display: grid;
+  gap: calc(var(--u) * 1.25);
+}
+.jacks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--jack), 1fr));
+  gap: calc(var(--u) * 1.5) var(--u);
+}
+.socket {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: calc(var(--u) * 0.75);
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+.socket .tag {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--ivory);
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.socket.patched .tag {
+  color: var(--ink);
+  font-weight: 700;
+}
+.socket:hover .jack:not(.ghost) {
+  filter: brightness(1.12);
+}
+.cords {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 0;
+}
+.cords path {
+  fill: none;
+  stroke-linecap: round;
+}
+.cords .sheath {
+  stroke: var(--cord-dark);
+  stroke-width: 6;
+}
+.cords .core {
+  stroke: var(--cord);
+  stroke-width: 4;
+}
+.cords .black .sheath {
+  stroke: #000;
+}
+.cords .black .core {
+  stroke: var(--bakelite-2);
+}
+.cords .plug {
+  fill: var(--bakelite);
+  stroke: var(--brass);
+  stroke-width: 2.5;
+}
+.oplog {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 2);
+  min-height: calc(var(--u) * 7);
+  background: var(--bakelite);
+  color: var(--bakelite-muted);
+  border-radius: 6px;
+  font-family: var(--display);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  display: grid;
+  gap: 2px;
+  list-style: none;
+}
+.oplog li {
+  display: flex;
+  gap: var(--u);
+  align-items: baseline;
+}
+.oplog li:last-child {
+  color: var(--bakelite-ink);
+}
+.oplog time {
+  color: var(--brass-hi);
+  min-width: 5ch;
+}
+
+/* Snippet on the bottom rail */
+.snippet {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 1.5) clamp(16px, 4vw, 48px);
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+}
+.snippet .label {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lamp);
+}
+.snippet pre {
+  margin: 0;
+  overflow-x: auto;
+  color: var(--bakelite-ink);
+  font-size: 14px;
+  line-height: 1.5;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bakelite-2) transparent;
+}
+.copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--u);
+  height: calc(var(--u) * 5);
+  padding: 0 calc(var(--u) * 2);
+  border: 0;
+  border-radius: 10px;
+  background: var(--lamp);
+  color: var(--bakelite);
+  font: 700 15px / 1 var(--display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform 160ms var(--ease),
+    background 160ms;
+}
+.copy:hover {
+  background: var(--brass-hi);
+}
+.copy:active {
+  transform: translateY(1px);
+}
+.copy:focus-visible {
+  outline-color: var(--bakelite-ink);
+}
+
+/* Sections below the board: each is a line on the board */
+.line {
+  padding: calc(var(--u) * 12) clamp(16px, 4vw, 48px) calc(var(--u) * 10);
+  border-bottom: 1px solid var(--ivory-line);
+}
+/* A section heading is engraved on its own bakelite plate, screwed to the panel. */
+.plate {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 calc(var(--u) * 3);
+  padding: calc(var(--u) * 2) calc(var(--u) * 6) calc(var(--u) * 2.25);
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+  border-radius: 6px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2rem, 3.6vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.5),
+    0 10px 24px -14px rgb(28 24 20 / 0.6);
+}
+.plate::before,
+.plate::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: var(--brass);
+  box-shadow: inset 0 0 0 1.5px #6f5222;
+}
+.plate::before {
+  left: calc(var(--u) * 2.25);
+}
+.plate::after {
+  right: calc(var(--u) * 2.25);
+}
+.line .intro {
+  margin: 0 0 calc(var(--u) * 6);
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 18px;
+  text-wrap: pretty;
+}
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* Configurator */
+.wire {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: calc(var(--u) * 5);
+  align-items: start;
+}
+.wire form {
+  display: grid;
+  gap: calc(var(--u) * 2.5);
+}
+.wire fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: var(--u);
+}
+.wire form > .strip {
+  width: fit-content;
+  margin-top: var(--u);
+}
+.wire legend,
+.wire label > span {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.wire label {
+  display: grid;
+  gap: calc(var(--u) * 0.75);
+}
+.wire small {
+  color: var(--muted);
+  font-size: 14px;
+}
+.wire input[type="text"],
+.wire input[type="url"],
+.wire select,
+.wire textarea {
+  width: 100%;
+  min-height: calc(var(--u) * 5.5);
+  padding: var(--u) calc(var(--u) * 1.5);
+  border: 0;
+  border-radius: 10px;
+  background: #fbf8f1;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ivory-line);
+  font: 16px / 1.4 var(--text);
+}
+.wire textarea {
+  resize: vertical;
+  min-height: calc(var(--u) * 10);
+}
+.wire input:focus-visible,
+.wire select:focus-visible,
+.wire textarea:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--cord);
+}
+.toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--ivory-deep);
+}
+.toggle label {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+.toggle input {
+  position: absolute;
+  opacity: 0;
+}
+.toggle span {
+  display: grid;
+  gap: 2px;
+  height: 100%;
+  padding: calc(var(--u) * 1.25) calc(var(--u) * 1.5);
+  border-radius: 10px;
+  font: 600 15px / 1.3 var(--text) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.toggle small {
+  font-weight: 400;
+}
+.toggle input:checked + span {
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+}
+.toggle input:checked + span small {
+  color: var(--bakelite-muted);
+}
+.toggle input:focus-visible + span {
+  outline: 2px solid var(--cord);
+  outline-offset: 2px;
+}
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--u) * 2);
+}
+.swatch {
+  display: flex;
+  gap: var(--u);
+  align-items: center;
+}
+.swatch input[type="color"] {
+  width: calc(var(--u) * 5.5);
+  height: calc(var(--u) * 5.5);
+  padding: 3px;
+  border: 0;
+  border-radius: 10px;
+  background: #fbf8f1;
+  box-shadow: inset 0 0 0 1px var(--ivory-line);
+  cursor: pointer;
+}
+.output {
+  position: sticky;
+  top: calc(var(--u) * 11);
+  display: grid;
+  gap: calc(var(--u) * 2);
+}
+.output .panel {
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.output pre {
+  margin: 0;
+  padding: calc(var(--u) * 3);
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.output .bar {
+  display: flex;
+  gap: calc(var(--u) * 1.5);
+  align-items: center;
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 2);
+  border-top: 1px solid var(--bakelite-2);
+}
+.output .bar .copy {
+  margin-left: auto;
+}
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--u);
+  height: calc(var(--u) * 5);
+  padding: 0 calc(var(--u) * 2);
+  border: 0;
+  border-radius: 10px;
+  background: var(--bakelite-2);
+  color: var(--bakelite-ink);
+  font: 600 15px / 1 var(--text);
+  cursor: pointer;
+}
+.ghost-btn:hover {
+  background: color-mix(in oklab, var(--bakelite-2) 80%, var(--bakelite-ink));
+}
+.hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+.warn {
+  margin: 0;
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 2);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--cord) 10%, var(--ivory));
+  color: #7a2416;
+  font-size: 15px;
+}
+
+/* Circuit: index → search → answer */
+.circuit {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(var(--u) * 4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: station;
+}
+.circuit::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 13px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--cord);
+  box-shadow: 0 1px 0 var(--cord-dark);
+}
+.circuit li {
+  position: relative;
+  display: grid;
+  gap: calc(var(--u) * 1.5);
+  align-content: start;
+}
+.circuit .jack {
+  z-index: 1;
+}
+.circuit h3 {
+  margin: calc(var(--u) * 1) 0 0;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1.05;
+}
+.circuit p {
+  margin: 0;
+  max-width: 38ch;
+}
+.circuit p strong {
+  font-weight: 650;
+}
+
+/* Two ways to hold the key */
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--u) * 3);
+}
+.mode {
+  padding: calc(var(--u) * 4);
+  border-radius: var(--radius);
+  background: var(--ivory-deep);
+  display: grid;
+  gap: calc(var(--u) * 1.5);
+  align-content: start;
+}
+.mode.dark {
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+}
+.mode.dark p {
+  color: var(--bakelite-muted);
+}
+.mode h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1.05;
+}
+.mode p {
+  margin: 0;
+}
+.mode pre {
+  margin: 0;
+  padding: calc(var(--u) * 2);
+  border-radius: 10px;
+  background: var(--bakelite-2);
+  color: var(--bakelite-ink);
+  overflow-x: auto;
+  font-size: 13.5px;
+}
+.mode .lamp {
+  margin-right: var(--u);
+  vertical-align: -1px;
+}
+
+/* Developer block */
+.dev {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+  gap: calc(var(--u) * 5);
+  align-items: start;
+}
+.dev dl {
+  margin: 0;
+  display: grid;
+  gap: calc(var(--u) * 2);
+}
+.dev dt {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+}
+.dev dd {
+  margin: 2px 0 0;
+  color: var(--muted);
+}
+.code {
+  margin: 0;
+  padding: calc(var(--u) * 3);
+  border-radius: var(--radius);
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.code .c {
+  color: var(--bakelite-muted);
+}
+.code .k {
+  color: var(--brass-hi);
+}
+.code .s {
+  color: var(--brass-hi);
+}
+
+/* Limits */
+.limits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--u) * 3) calc(var(--u) * 6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.limits li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: calc(var(--u) * 2);
+  align-items: start;
+}
+.limits .lamp {
+  margin-top: 7px;
+}
+.limits b {
+  display: block;
+  font-family: var(--display);
+  font-size: 21px;
+  line-height: 1.2;
+}
+.limits span {
+  color: var(--muted);
+}
+
+/* Footer rail */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 2) calc(var(--u) * 4);
+  align-items: center;
+  padding: calc(var(--u) * 4) clamp(16px, 4vw, 48px);
+  background: var(--bakelite);
+  color: var(--bakelite-muted);
+  font-size: 15px;
+}
+.foot a {
+  color: var(--bakelite-ink);
+}
+.foot .wordmark {
+  color: var(--bakelite-ink);
+  font-size: 22px;
+  margin-right: auto;
+}
+
+/* Guide (Read) */
+.doc {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: calc(var(--u) * 6);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: calc(var(--u) * 6) clamp(16px, 4vw, 48px) calc(var(--u) * 12);
+}
+.toc {
+  position: sticky;
+  top: calc(var(--u) * 11);
+  align-self: start;
+  display: grid;
+  gap: var(--u);
+}
+.toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+.toc a {
+  display: block;
+  padding: calc(var(--u) * 0.5) var(--u);
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 15px;
+}
+.toc a:hover {
+  color: var(--ink);
+  background: var(--ivory-deep);
+}
+.prose {
+  max-width: 72ch;
+  min-width: 0;
+}
+.prose h1 {
+  margin: 0 0 calc(var(--u) * 2);
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 4vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.prose h2 {
+  margin: calc(var(--u) * 8) 0 calc(var(--u) * 2);
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 30px;
+  line-height: 1.1;
+  padding-top: calc(var(--u) * 2);
+  border-top: 1px solid var(--ivory-line);
+}
+.prose h3 {
+  margin: calc(var(--u) * 5) 0 var(--u);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.2;
+}
+.prose p,
+.prose ul,
+.prose ol {
+  margin: 0 0 calc(var(--u) * 2);
+}
+.prose li + li {
+  margin-top: calc(var(--u) * 0.5);
+}
+.prose pre {
+  margin: 0 0 calc(var(--u) * 3);
+  padding: calc(var(--u) * 2.5);
+  border-radius: 14px;
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.prose table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  margin: 0 0 calc(var(--u) * 3);
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.prose th,
+.prose td {
+  padding: var(--u) calc(var(--u) * 1.5) var(--u) 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--ivory-line);
+}
+.prose th {
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.prose td:first-child code {
+  white-space: nowrap;
+}
+.prose .lead {
+  font-size: 19px;
+  color: var(--muted);
+}
+
+/* Playground (Operate) */
+.bench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(var(--u) * 4);
+  padding: calc(var(--u) * 5) clamp(16px, 4vw, 48px) calc(var(--u) * 8);
+  max-width: 1320px;
+  margin: 0 auto;
+}
+.bench h1 {
+  margin: 0 0 var(--u);
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2.2rem, 3.4vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.bench .intro {
+  margin: 0 0 calc(var(--u) * 3);
+  color: var(--muted);
+  max-width: 52ch;
+}
+.bench form {
+  display: grid;
+  gap: calc(var(--u) * 2);
+}
+.bench textarea {
+  width: 100%;
+  min-height: 320px;
+  padding: calc(var(--u) * 2);
+  border: 0;
+  border-radius: 14px;
+  background: #fbf8f1;
+  box-shadow: inset 0 0 0 1px var(--ivory-line);
+  font: 15px / 1.5 var(--mono);
+  resize: vertical;
+  color: var(--ink);
+}
+.bench textarea:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--cord);
+}
+.drop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 1.5);
+  align-items: center;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--u);
+  height: calc(var(--u) * 5.5);
+  padding: 0 calc(var(--u) * 2.5);
+  border: 0;
+  border-radius: 10px;
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+  font: 700 16px / 1 var(--display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.btn:hover {
+  background: var(--bakelite-2);
+}
+.btn.quiet {
+  background: var(--ivory-deep);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ivory-line);
+}
+.btn.quiet:hover {
+  background: #fbf8f1;
+}
+.stats {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+.line-panel {
+  display: grid;
+  gap: calc(var(--u) * 1.5);
+  align-content: start;
+}
+.bench .handset {
+  min-height: 520px;
+  max-height: none;
+  height: calc(100svh - var(--u) * 24);
+}
+.empty {
+  display: grid;
+  place-content: center;
+  gap: calc(var(--u) * 2);
+  height: 100%;
+  padding: calc(var(--u) * 4);
+  text-align: center;
+  color: var(--muted);
+}
+.empty .jack {
+  margin: 0 auto;
+}
+
+@media (max-width: 960px) {
+  .board,
+  .wire,
+  .dev,
+  .bench {
+    grid-template-columns: 1fr;
+  }
+  .console {
+    border-right: 0;
+    border-bottom: 1px solid var(--ivory-line);
+  }
+  .handset {
+    min-height: 460px;
+  }
+  .output {
+    position: static;
+  }
+  .circuit,
+  .modes,
+  .limits {
+    grid-template-columns: 1fr;
+  }
+  .circuit::before {
+    left: 13px;
+    right: auto;
+    top: 14px;
+    bottom: 14px;
+    width: 4px;
+    height: auto;
+  }
+  .circuit li {
+    padding-left: calc(var(--u) * 6);
+  }
+  .circuit .jack {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .doc {
+    grid-template-columns: 1fr;
+  }
+  .toc {
+    position: static;
+  }
+}
+@media (max-width: 640px) {
+  body {
+    font-size: 16px;
+  }
+  .rail {
+    gap: var(--u);
+  }
+  .rail nav a:not(.lang) {
+    display: none;
+  }
+  .rail nav a.keep {
+    display: inline-block;
+  }
+  .jacks > span.socket {
+    display: none;
+  }
+  .snippet {
+    grid-template-columns: 1fr;
+  }
+  .pair {
+    grid-template-columns: 1fr;
+  }
+  .toggle {
+    grid-template-columns: 1fr;
+  }
+  .line {
+    padding-top: calc(var(--u) * 8);
+    padding-bottom: calc(var(--u) * 7);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "name": "murmur-rag",
+  "version": "0.0.0-development",
+  "description": "Embeddable AI chat for static sites: one script tag, a mini RAG over your own pages, any LLM through llm-connect (your proxy or the visitor's own key). No backend.",
+  "author": "maxgfr",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxgfr/murmur.git"
+  },
+  "homepage": "https://maxgfr.github.io/murmur/",
+  "bugs": {
+    "url": "https://github.com/maxgfr/murmur/issues"
+  },
+  "keywords": [
+    "chatbot",
+    "rag",
+    "llm",
+    "ai",
+    "ai-sdk",
+    "llm-connect",
+    "embeddable-widget",
+    "web-components",
+    "static-site",
+    "github-pages",
+    "bm25",
+    "byok",
+    "no-backend"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/lib/index.js"
+    },
+    "./rag": {
+      "types": "./dist/types/rag/index.d.ts",
+      "default": "./dist/lib/rag/index.js"
+    },
+    "./indexer": {
+      "types": "./dist/types/indexer/index.d.ts",
+      "default": "./dist/lib/indexer/index.js"
+    },
+    "./llm": {
+      "types": "./dist/types/llm/index.d.ts",
+      "default": "./dist/lib/llm/index.js"
+    },
+    "./widget": {
+      "types": "./dist/types/widget/index.d.ts",
+      "default": "./dist/lib/widget/index.js"
+    },
+    "./embed": {
+      "types": "./dist/types/embed.d.ts",
+      "default": "./dist/lib/embed.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/lib/index.js",
+  "types": "./dist/types/index.d.ts",
+  "bin": {
+    "murmur": "./dist/cli.js"
+  },
+  "files": [
+    "dist/lib",
+    "dist/types",
+    "dist/cli.js",
+    "dist/cdn",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "./dist/lib/embed.js",
+    "./dist/cdn/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "dev": "bun run build && PORT=4317 bun scripts/serve.ts",
+    "build": "bun scripts/build.ts",
+    "build:lib": "bun scripts/build.ts lib",
+    "build:site": "bun scripts/build.ts site",
+    "typecheck": "tsc -p .",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "bun test tests",
+    "test:e2e": "bun run build && playwright test",
+    "catalog": "llm-models catalog --npm callable --require openai,anthropic,google,mistral --out assets/models.json",
+    "release": "semantic-release"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.90",
+    "@ai-sdk/google": "^4.0.107",
+    "@ai-sdk/mistral": "^4.0.74",
+    "@ai-sdk/openai": "^4.0.104",
+    "@ai-sdk/openai-compatible": "^3.0.80",
+    "ai": "^7.0.155",
+    "linkedom": "^0.18.14",
+    "llm-connect": "^2.5.0",
+    "llm-models": "^1.14.0",
+    "minisearch": "^7.2.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.3",
+    "@playwright/test": "^1.64.1",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^11.0.1",
+    "@types/bun": "^1.4.4",
+    "semantic-release": "^25.0.9",
+    "typescript": "^7.0.2"
+  }
+}

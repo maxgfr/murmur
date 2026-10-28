@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="{{lang}}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{meta.playgroundTitle}}</title>
+    <meta name="description" content="{{meta.description}}" />
+    <meta property="og:title" content="{{meta.playgroundTitle}}" />
+    <meta property="og:description" content="{{meta.description}}" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#1c1814" />
+    <link rel="alternate" hreflang="en" href="{{lang-url:en}}playground.html" />
+    <link rel="alternate" hreflang="fr" href="{{lang-url:fr}}playground.html" />
+    <link rel="icon" href="{{src}}static/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="{{src}}fonts/sofia-sans-condensed-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="{{src}}styles/site.css" />
+    <script>
+      try {
+        var pick = localStorage.getItem("murmur-site-lang");
+        var want = pick || ((navigator.language || "").toLowerCase().startsWith("fr") ? "fr" : "en");
+        if (want !== "{{lang}}" && !pick && !sessionStorage.getItem("murmur-site-redirected")) {
+          sessionStorage.setItem("murmur-site-redirected", "1");
+          location.replace(document.querySelector('link[hreflang="' + want + '"]').href);
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body data-page="playground" data-root="{{root}}">
+    <a class="skip" href="#paste">{{nav.skip}}</a>
+    <header class="rail">
+      <a class="wordmark" href="{{root}}"><span class="lamp on" aria-hidden="true"></span>murmur</a>
+      <nav aria-label="{{nav.label}}">
+        <a href="{{root}}guide.html">{{nav.guide}}</a>
+        <a href="{{root}}playground.html" aria-current="page">{{nav.playground}}</a>
+        <a href="https://github.com/maxgfr/murmur">GitHub</a>
+        <a href="https://www.npmjs.com/package/murmur-rag">npm</a>
+        <a class="lang keep" href="{{nav.langPrefix}}playground.html" hreflang="{{nav.langCode}}" lang="{{nav.langCode}}">{{nav.langLabel}}</a>
+      </nav>
+    </header>
+
+    <main class="bench">
+      <section aria-labelledby="play-title">
+        <h1 id="play-title">{{play.title}}</h1>
+        <p class="intro">{{play.intro}}</p>
+        <form id="bench">
+          <label class="sr" for="paste">{{play.paste}}</label>
+          <textarea id="paste" placeholder="{{play.placeholder}}" spellcheck="false"></textarea>
+          <div class="drop">
+            <button class="btn" type="submit">{{play.index}}</button>
+            <label class="btn quiet">{{play.files}}<input class="sr" type="file" id="files" multiple accept=".md,.markdown,.txt,.html,.htm,text/*" /></label>
+            <button class="btn quiet" type="button" id="sample">{{play.sample}}</button>
+          </div>
+          <p class="stats" id="stats" role="status"></p>
+        </form>
+      </section>
+      <section class="line-panel" aria-label="murmur">
+        <p class="strip"><span class="lamp" id="bench-lamp" aria-hidden="true"></span>{{play.line}}</p>
+        <div class="handset" id="bench-handset">
+          <div class="empty"><span class="jack ghost" aria-hidden="true"></span><p>{{play.empty}}</p></div>
+        </div>
+      </section>
+    </main>
+    <footer class="foot">
+      <a class="wordmark" href="{{root}}"><span class="lamp on" aria-hidden="true"></span>murmur</a>
+      <span>{{foot.made}} <a href="https://github.com/maxgfr">maxgfr</a> · MIT</span>
+      <a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">llm-connect</a>
+      <a href="https://maxgfr.github.io/ephemeral/">ephemeral</a>
+    </footer>
+    <script type="application/json" id="i18n">{{i18n-json}}</script>
+    <script type="module" src="{{src}}scripts/playground.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Proxy mode test · murmur</title>
+    <style>body { margin: 0 auto; max-width: 680px; padding: 48px 20px; font: 18px/1.6 system-ui, sans-serif; }</style>
+  </head>
+  <body>
+    <main>
+      <h1>Proxy mode</h1>
+      <p>This page talks to a fake OpenAI-compatible endpoint (scripts/mock-llm.ts) through data-endpoint, so visitors never see a settings screen. It answers from the murmur site index.</p>
+    </main>
+    <script type="module" src="/murmur/cdn/murmur.js" data-index="/murmur/murmur-index.json"
+      data-endpoint="http://localhost:4317/mock/v1" data-model="mock" data-open="true"></script>
+  </body>
+</html>
