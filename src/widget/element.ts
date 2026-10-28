@@ -1,5 +1,5 @@
 import type { LlmSettingsState, LlmSettingsStore } from "../llm/index";
-import { passageHref } from "../rag/ground";
+import { cleanAnswer, passageHref } from "../rag/ground";
 import { type Messages, messagesFor, pickLanguage } from "./i18n";
 import { icon } from "./icons";
 import { renderMarkdown } from "./markdown";
@@ -18,7 +18,18 @@ const ERROR_KEYS: Record<string, keyof Messages> = {
   "auth-or-network": "errorNetwork",
   "rate-limit": "errorRate",
   overloaded: "errorRate",
+  "local-webgpu": "localNoWebGPU",
+  "local-load": "localLoadFailed",
 };
+
+/** A size in the widget's language: "1,1 Go" in French, "1.1 GB" in English. */
+function size(megabytes: number, lang: string, t: Messages): string {
+  if (megabytes >= 1000) {
+    const n = (megabytes / 1000).toLocaleString(lang, { maximumFractionDigits: 1 });
+    return `${n} ${t.gigabytes}`;
+  }
+  return `${Math.round(megabytes).toLocaleString(lang)} ${t.megabytes}`;
+}
 
 /**
  * `<murmur-chat>`: a chat bubble that answers from the site's pages. Configure it with
@@ -34,6 +45,7 @@ export class MurmurChat extends Base {
   private options: WidgetOptions = {};
   private session: ChatSession | null = null;
   private t: Messages = messagesFor("en");
+  private uiLang = "en";
   private readonly root: ShadowRoot;
   private launcher!: HTMLButtonElement;
   private panel!: HTMLElement;
@@ -103,6 +115,7 @@ export class MurmurChat extends Base {
   private build(): void {
     const o = this.options;
     const lang = pickLanguage(o.lang, document.documentElement.lang, navigator.language);
+    this.uiLang = lang;
     const overrides: Partial<Messages> = { ...o.messages };
     this.t = messagesFor(lang, overrides);
     if (o.position) this.setAttribute("position", o.position);
@@ -144,7 +157,7 @@ export class MurmurChat extends Base {
       this.input.focus();
     });
     this.settingsBtn = iconButton(doc, "settings", this.t.settings);
-    this.settingsBtn.hidden = !!o.model || !!o.llm?.endpoint;
+    this.settingsBtn.hidden = !!o.model || !!o.llm?.endpoint || !!o.local;
     this.settingsBtn.addEventListener("click", () => void this.showSetup());
     const closeBtn = iconButton(doc, "close", this.t.close);
     closeBtn.hidden = this.hasAttribute("inline");
@@ -278,7 +291,7 @@ export class MurmurChat extends Base {
     }
     const passages = turn.passages ?? [];
     const body = el(doc, "div");
-    renderMarkdown(body, turn.content, (n) => {
+    renderMarkdown(body, cleanAnswer(turn.content), (n) => {
       const p = passages[n - 1];
       if (!p) return null;
       const a = el(doc, "a", { class: "cite", href: passageHref(p) });
@@ -321,6 +334,10 @@ export class MurmurChat extends Base {
   private async submit(): Promise<void> {
     const question = this.input.value.trim();
     if (!question || this.controller || !this.session) return;
+    if (this.session.needsDownloadConsent) {
+      await this.showConsent(question);
+      return;
+    }
     if (await this.session.needsSetup()) {
       await this.showSetup(question);
       return;
@@ -339,6 +356,22 @@ export class MurmurChat extends Base {
     this.log.append(node);
     this.log.scrollTop = this.log.scrollHeight;
     this.log.setAttribute("aria-busy", "true");
+
+    // While the in-browser model downloads, the status line shows how far it got.
+    this.session.onProgress = (p) => {
+      if (!status.isConnected) return;
+      const bar = el(doc, "progress", { max: "1", value: String(p.progress) });
+      bar.setAttribute("aria-label", this.t.localLoadingLabel);
+      const label =
+        p.progress >= 1
+          ? this.t.localPreparing
+          : `${this.t.localLoading} ${Math.round(p.progress * 100)} % · ${Math.round(p.loaded / 1e6).toLocaleString(this.uiLang)} / ${size(p.total / 1e6, this.uiLang, this.t)}`;
+      status.replaceChildren(
+        el(doc, "span", { class: "lamp busy", "aria-hidden": "true" }),
+        el(doc, "span", { class: "grow" }),
+      );
+      status.lastElementChild?.append(doc.createTextNode(label), bar);
+    };
 
     const controller = new AbortController();
     this.controller = controller;
@@ -379,6 +412,61 @@ export class MurmurChat extends Base {
     }
   }
 
+  /** Asks the visitor before downloading the in-browser model, or says why it cannot run. */
+  private async showConsent(question: string): Promise<void> {
+    if (!this.session) return;
+    const doc = this.ownerDocument;
+    const t = this.t;
+    const session = this.session;
+    const spec = await session.localSpec();
+    const card = el(doc, "div", { class: "msg bot consent" });
+    const row = el(doc, "div", { class: "row" });
+    const ownerLocal = !!this.options.local;
+    const useKey = () => {
+      card.remove();
+      session.useLocal(false);
+      void this.showSetup(question);
+    };
+    if (!(await session.canRunLocally())) {
+      card.append(text(doc, "p", t.localNoWebGPU));
+      if (!ownerLocal) {
+        const key = el(doc, "button", { class: "text-btn", type: "button" });
+        key.textContent = t.useKey;
+        key.addEventListener("click", useKey);
+        row.append(key);
+      }
+    } else {
+      card.append(
+        text(
+          doc,
+          "p",
+          t.localConsent
+            .replace("{name}", spec.name)
+            .replace("{size}", size(spec.sizeMB, this.uiLang, t)),
+        ),
+      );
+      const go = el(doc, "button", { class: "primary", type: "button" }) as HTMLButtonElement;
+      go.textContent = t.localDownload;
+      go.addEventListener("click", () => {
+        session.agreeToDownload();
+        card.remove();
+        this.input.value = question;
+        void this.submit();
+      });
+      row.append(go);
+      if (!ownerLocal) {
+        const key = el(doc, "button", { class: "link-btn", type: "button" });
+        key.textContent = t.useKey;
+        key.addEventListener("click", useKey);
+        row.append(key);
+      }
+    }
+    card.append(row);
+    this.log.append(card);
+    this.log.scrollTop = this.log.scrollHeight;
+    (row.querySelector("button") as HTMLButtonElement | null)?.focus();
+  }
+
   /** The visitor's model settings, drawn from llm-connect's store. */
   private async showSetup(pending?: string): Promise<void> {
     if (!this.session) return;
@@ -397,6 +485,47 @@ export class MurmurChat extends Base {
     const heading = text(doc, "h3", t.setupTitle);
     heading.style.cssText = "margin:0;font-size:17px;font-weight:650";
     const intro = text(doc, "p", t.setupIntro, "intro");
+
+    // First choice: a model in this browser, no key at all.
+    const session = this.session;
+    const spec = await session.localSpec();
+    const inBrowser = el(doc, "div", { class: "local-choice" });
+    const localBtn = el(doc, "button", { class: "primary", type: "button" }) as HTMLButtonElement;
+    localBtn.textContent = t.localOption;
+    const localHint = text(
+      doc,
+      "small",
+      t.localOptionHint
+        .replace("{name}", spec.name)
+        .replace("{size}", size(spec.sizeMB, this.uiLang, t)),
+    );
+    inBrowser.append(localBtn, localHint);
+    localBtn.addEventListener("click", () => {
+      session.useLocal(true);
+      this.hideSetup();
+      if (pending) {
+        this.input.value = pending;
+        void this.submit();
+      }
+    });
+    void session.canRunLocally().then((ok) => {
+      localBtn.disabled = !ok;
+      if (!ok) localHint.textContent = t.localNoWebGPU;
+    });
+    if (session.mode === "local") {
+      localBtn.textContent = t.localActive;
+      localBtn.disabled = true;
+      const back = el(doc, "button", { class: "link-btn", type: "button" });
+      back.textContent = t.useKey;
+      back.addEventListener("click", () => {
+        session.useLocal(false);
+        localBtn.textContent = t.localOption;
+        localBtn.disabled = false;
+        back.remove();
+      });
+      inBrowser.append(back);
+    }
+    const or = text(doc, "p", t.orKey, "or");
 
     const local = checkbox(doc, t.local);
     const providerField = field(doc, t.provider, el(doc, "select") as HTMLSelectElement);
@@ -459,6 +588,7 @@ export class MurmurChat extends Base {
     saveBtn.addEventListener("click", async () => {
       const saved = await store.save();
       if (!saved.ok) return;
+      session.useLocal(false);
       this.hideSetup();
       if (pending) {
         this.input.value = pending;
@@ -473,6 +603,8 @@ export class MurmurChat extends Base {
       back,
       heading,
       intro,
+      inBrowser,
+      or,
       local.label,
       providerField.label,
       modelField.label,
@@ -521,7 +653,9 @@ export class MurmurChat extends Base {
     };
     this.unsubscribe?.();
     this.unsubscribe = store.subscribe(draw);
-    (store.getState().draft.custom ? endpointInput : providerSelect).focus();
+    // Start at the top, where the in-browser choice is offered first.
+    this.setupView.scrollTop = 0;
+    back.focus();
   }
 
   private hideSetup(): void {

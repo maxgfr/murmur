@@ -56,7 +56,7 @@
           <div class="jackfield" id="jackfield" aria-live="polite">
             <p class="note">{{field.loading}}</p>
           </div>
-          <ol class="oplog" id="oplog" aria-label="{{field.logLabel}}">
+          <ol class="oplog no-index" id="oplog" aria-label="{{field.logLabel}}">
             <li><time>--:--</time><span>{{field.strip}}</span></li>
             <li><time>--:--</time><span>{{field.idle}}</span></li>
           </ol>
@@ -82,6 +82,7 @@
                 <div class="toggle">
                   <label><input type="radio" name="mode" value="visitor" checked /><span>{{wire.modeVisitor}}<small>{{wire.modeVisitorHint}}</small></span></label>
                   <label><input type="radio" name="mode" value="proxy" /><span>{{wire.modeProxy}}<small>{{wire.modeProxyHint}}</small></span></label>
+                  <label><input type="radio" name="mode" value="local" /><span>{{wire.modeLocal}}<small>{{wire.modeLocalHint}}</small></span></label>
                 </div>
               </fieldset>
               <div class="pair" data-when="visitor">
@@ -93,6 +94,7 @@
                 <label><span>{{wire.proxyModel}}</span><input type="text" name="proxyModel" autocomplete="off" placeholder="openai/gpt-5-mini" /></label>
               </div>
               <p class="hint" data-when="proxy" hidden>{{wire.proxyHint}}</p>
+              <p class="hint" data-when="local" hidden>{{wire.localHint}}</p>
               <p class="strip">{{wire.groupContent}}</p>
               <label><span>{{wire.index}}</span><input type="text" name="index" placeholder="/murmur-index.json" /><small>{{wire.indexHint}}</small></label>
               <div class="pair">
@@ -147,6 +149,12 @@
               <p><a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">{{keys.proxyLink}}</a></p>
             </article>
             <article class="mode">
+              <h3><span class="lamp on" aria-hidden="true"></span>{{keys.localTitle}}</h3>
+              <p>{{keys.localText}}</p>
+              <pre tabindex="0"><code>data-local="true"</code></pre>
+              <p><a href="https://huggingface.co/LiquidAI/LFM3-1.7B">LFM3-1.7B</a></p>
+            </article>
+            <article class="mode">
               <h3><span class="lamp" aria-hidden="true"></span>{{keys.visitorTitle}}</h3>
               <p>{{keys.visitorText}}</p>
               <pre tabindex="0"><code>data-provider="openrouter" data-model="…"</code></pre>
@@ -194,6 +202,7 @@ mountMurmur({ index: <span class="s">"/murmur-index.json"</span>, llm: { provide
             <li><span class="lamp" aria-hidden="true"></span><div><b>{{limits.l2}}</b><span>{{limits.l2text}}</span></div></li>
             <li><span class="lamp" aria-hidden="true"></span><div><b>{{limits.l3}}</b><span>{{limits.l3text}}</span></div></li>
             <li><span class="lamp" aria-hidden="true"></span><div><b>{{limits.l4}}</b><span>{{limits.l4text}}</span></div></li>
+            <li><span class="lamp" aria-hidden="true"></span><div><b>{{limits.l5}}</b><span>{{limits.l5text}}</span></div></li>
           </ul>
         </div>
       </section>

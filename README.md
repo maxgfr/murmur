@@ -12,17 +12,18 @@ An AI chat bubble for any website that answers from the site's own pages, cites 
 
 Paste the line before `</body>`. Without options, the bubble answers from the page the visitor is on and each visitor brings their own AI key. The [configurator](https://maxgfr.github.io/murmur/#wire) writes the line for you.
 
-| Attribute                                                        |                                                                                                         |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `data-index`                                                     | URL of the index written by `murmur index` (`/murmur-index.json`). Without it, the current page is read |
-| `data-endpoint`                                                  | Your OpenAI-compatible proxy (https): visitors chat without a key                                       |
-| `data-provider`, `data-model`                                    | Provider and model preselected for visitors, or the model asked of the proxy                            |
-| `data-instructions`                                              | Your instructions to the assistant                                                                      |
-| `data-title`, `data-greeting`, `data-placeholder`, `data-button` | Texts of the panel                                                                                      |
-| `data-lang`                                                      | `en` or `fr` (default: the page's `lang`, then the browser's)                                           |
-| `data-position`                                                  | `bottom-right` (default) or `bottom-left`                                                               |
-| `data-accent`, `data-theme`                                      | Any CSS colour; `auto`, `light` or `dark`                                                               |
-| `data-open`, `data-storage-key`                                  | Open on load; prefix of what the widget stores                                                          |
+| Attribute                                                        |                                                                                                           |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `data-index`                                                     | URL of the index written by `murmur index` (`/murmur-index.json`). Without it, the current page is read   |
+| `data-endpoint`                                                  | Your OpenAI-compatible proxy (https): visitors chat without a key                                         |
+| `data-local`                                                     | `true`: a model runs in the visitor's browser on WebGPU (LFM3 1.7B, about 1.1 GB once). No key, no server |
+| `data-provider`, `data-model`                                    | Provider and model preselected for visitors, or the model asked of the proxy                              |
+| `data-instructions`                                              | Your instructions to the assistant                                                                        |
+| `data-title`, `data-greeting`, `data-placeholder`, `data-button` | Texts of the panel                                                                                        |
+| `data-lang`                                                      | `en` or `fr` (default: the page's `lang`, then the browser's)                                             |
+| `data-position`                                                  | `bottom-right` (default) or `bottom-left`                                                                 |
+| `data-accent`, `data-theme`                                      | Any CSS colour; `auto`, `light` or `dark`                                                                 |
+| `data-open`, `data-storage-key`                                  | Open on load; prefix of what the widget stores                                                            |
 
 The widget lives in a Shadow DOM and is restyled through `--murmur-accent`, `--murmur-accent-ink`, `--murmur-font`, `--murmur-radius` and `--murmur-z`. It emits `murmur:state` events (`searching`, `streaming`, `done`, `error`) with the passages found and cited.
 
@@ -39,6 +40,7 @@ Reads every `.html`, `.md` and `.txt` file (or a live `sitemap.xml`), keeps the 
 A key in a web page is readable by anyone, so murmur never puts one there:
 
 - **Your proxy holds the key.** Deploy [`examples/cloudflare-worker`](examples/cloudflare-worker) (about 40 lines): it keeps the key as a secret, allows only your origin, fixes the model and caps answers. Then `data-endpoint="https://murmur-proxy.you.workers.dev/v1"`.
+- **No key at all.** `data-local="true"` runs [LFM3 1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B) (Liquid AI, October 2026) in the visitor's browser on WebGPU through Transformers.js. The widget asks before downloading about 1.1 GB, then the weights stay in the browser's cache and questions never leave the device. Slower and less precise than a hosted model; visitors can also pick it from the AI settings.
 - **Each visitor brings theirs.** The first question opens the AI settings, built on llm-connect's store: provider and model from the [llm-models](https://github.com/maxgfr/llm-models) catalog, the key encrypted with AES-GCM under a non-extractable browser key and sent only to that provider, or a local Ollama / LM Studio.
 
 ## npm package
@@ -47,14 +49,15 @@ A key in a web page is readable by anyone, so murmur never puts one there:
 npm install murmur-rag
 ```
 
-| Import               |                                                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------ |
-| `murmur-rag`         | `createMurmur({ index \| retriever, model })`: `ask()` streams an answer and its cited passages, no UI |
-| `murmur-rag/rag`     | `bm25Retriever`, `buildIndex`, `splitText`, `formatSources`, `citedSources`, the `Retriever` interface |
-| `murmur-rag/indexer` | `indexPages`, `indexDocument`, `extractSections` (Node or browser)                                     |
-| `murmur-rag/llm`     | `proxySettings`, `visitorStore`, `resolveSettings` on top of llm-connect                               |
-| `murmur-rag/widget`  | `mountMurmur`, `defineMurmurChat`, `MurmurChat`, `renderMarkdown`                                      |
-| `murmur-rag/embed`   | The script-tag entry                                                                                   |
+| Import               |                                                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `murmur-rag`         | `createMurmur({ index \| retriever, model })`: `ask()` streams an answer and its cited passages, no UI              |
+| `murmur-rag/rag`     | `bm25Retriever`, `buildIndex`, `splitText`, `formatSources`, `citedSources`, the `Retriever` interface              |
+| `murmur-rag/indexer` | `indexPages`, `indexDocument`, `extractSections` (Node or browser)                                                  |
+| `murmur-rag/llm`     | `proxySettings`, `visitorStore`, `resolveSettings` on top of llm-connect                                            |
+| `murmur-rag/local`   | `localModel()`: an AI SDK model running in the page on WebGPU (needs the optional peer `@huggingface/transformers`) |
+| `murmur-rag/widget`  | `mountMurmur`, `defineMurmurChat`, `MurmurChat`, `renderMarkdown`                                                   |
+| `murmur-rag/embed`   | The script-tag entry                                                                                                |
 
 ```ts
 import { createMurmur } from "murmur-rag";
@@ -79,6 +82,7 @@ Any object with `search(query)` returning passages replaces BM25 (embeddings, a 
 - The index downloads with the first question: fine for hundreds of pages, not tens of thousands.
 - In visitor-key mode the provider must accept browser calls (CORS).
 - Grounding reduces invented answers; it does not end them.
+- The in-browser model needs WebGPU and about 1.1 GB on first use, and answers with less nuance than a hosted model.
 
 ## Privacy
 

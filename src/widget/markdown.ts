@@ -50,6 +50,23 @@ function inline(doc: Document, text: string, cite: CitationRenderer, out: Node):
   if (last < text.length) out.appendChild(doc.createTextNode(text.slice(last)));
 }
 
+const TABLE_RULE = /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)*\|?\s*$/;
+
+/** A line ending in two spaces or a backslash is a hard break; any other line wraps on. */
+function lineBreak(doc: Document, previous: string): Node {
+  return / {2,}$|\\$/.test(previous) ? doc.createElement("br") : doc.createTextNode(" ");
+}
+
+/** The cells of a `| a | b |` table row. */
+function cells(row: string): string[] {
+  return row
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((c) => c.trim());
+}
+
 /** Renders Markdown into `target`, replacing its children. */
 export function renderMarkdown(target: Element, markdown: string, cite: CitationRenderer): void {
   const doc = target.ownerDocument;
@@ -61,7 +78,10 @@ export function renderMarkdown(target: Element, markdown: string, cite: Citation
   const flushPara = () => {
     if (!para.length) return;
     const p = doc.createElement("p");
-    inline(doc, para.join(" "), cite, p);
+    para.forEach((raw, n) => {
+      if (n) p.appendChild(lineBreak(doc, para[n - 1] ?? ""));
+      inline(doc, raw.trim(), cite, p);
+    });
     frag.appendChild(p);
     para = [];
   };
@@ -71,18 +91,66 @@ export function renderMarkdown(target: Element, markdown: string, cite: Citation
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i] ?? "";
-    const fence = /^\s*```/.exec(line);
+    const fence = /^(\s*)```/.exec(line);
     if (fence) {
       flushPara();
-      closeList();
+      // An indented fence under a list item belongs to that item.
+      const indent = fence[1]?.length ?? 0;
+      const owner = indent >= 2 && list ? list.lastElementChild : null;
+      if (!owner) closeList();
       const body: string[] = [];
-      for (i++; i < lines.length && !/^\s*```/.test(lines[i] ?? ""); i++) body.push(lines[i] ?? "");
+      for (i++; i < lines.length && !/^\s*```/.test(lines[i] ?? ""); i++) {
+        const raw = lines[i] ?? "";
+        body.push(raw.startsWith(" ".repeat(indent)) ? raw.slice(indent) : raw.trimStart());
+      }
       const pre = doc.createElement("pre");
       pre.tabIndex = 0; // it may scroll sideways: keyboard users must be able to reach it
       const code = doc.createElement("code");
       code.textContent = body.join("\n");
       pre.appendChild(code);
-      frag.appendChild(pre);
+      (owner ?? frag).appendChild(pre);
+      continue;
+    }
+    if (/^\s*([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
+      flushPara();
+      closeList();
+      frag.appendChild(doc.createElement("hr"));
+      continue;
+    }
+    if (line.includes("|") && TABLE_RULE.test(lines[i + 1] ?? "")) {
+      flushPara();
+      closeList();
+      const rows: string[][] = [cells(line)];
+      for (i += 2; i < lines.length && (lines[i] ?? "").includes("|"); i++)
+        rows.push(cells(lines[i] ?? ""));
+      i--;
+      const wrap = doc.createElement("div");
+      wrap.className = "table";
+      wrap.tabIndex = 0; // it may scroll sideways
+      const table = doc.createElement("table");
+      rows.forEach((row, r) => {
+        const tr = doc.createElement("tr");
+        for (const cell of row) {
+          const td = doc.createElement(r === 0 ? "th" : "td");
+          inline(doc, cell, cite, td);
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      });
+      wrap.appendChild(table);
+      frag.appendChild(wrap);
+      continue;
+    }
+    const quote = /^\s*>\s?(.*)$/.exec(line);
+    if (quote) {
+      flushPara();
+      closeList();
+      const body = [quote[1] ?? ""];
+      for (; /^\s*>/.test(lines[i + 1] ?? ""); i++)
+        body.push((lines[i + 1] ?? "").replace(/^\s*>\s?/, ""));
+      const blockquote = doc.createElement("blockquote");
+      renderMarkdown(blockquote, body.join("\n"), cite);
+      frag.appendChild(blockquote);
       continue;
     }
     const item = /^\s*(?:([-*+])|(\d+)[.)])\s+(.*)$/.exec(line);
@@ -91,10 +159,12 @@ export function renderMarkdown(target: Element, markdown: string, cite: Citation
       const tag = item[1] ? "ul" : "ol";
       if (!list || list.tagName.toLowerCase() !== tag) {
         list = doc.createElement(tag);
+        // A numbered list split by blank lines keeps counting from where it is.
+        if (tag === "ol" && item[2] && item[2] !== "1") list.setAttribute("start", item[2]);
         frag.appendChild(list);
       }
       const li = doc.createElement("li");
-      inline(doc, item[3] ?? "", cite, li);
+      inline(doc, (item[3] ?? "").trimEnd(), cite, li);
       list.appendChild(li);
       continue;
     }
@@ -111,19 +181,22 @@ export function renderMarkdown(target: Element, markdown: string, cite: Citation
     }
     if (!line.trim()) {
       flushPara();
-      closeList();
+      // Small models often leave a blank line between items: keep one list across it.
+      const next = lines.slice(i + 1).find((l) => l.trim()) ?? "";
+      const same = list?.tagName.toLowerCase() === "ol" ? /^\s*\d+[.)]\s+/ : /^\s*[-*+]\s+/;
+      if (!list || !same.test(next)) closeList();
       continue;
     }
     if (list && /^\s{2,}\S/.test(line)) {
       const li = list.lastElementChild;
       if (li) {
-        li.appendChild(doc.createTextNode(" "));
+        li.appendChild(lineBreak(doc, lines[i - 1] ?? ""));
         inline(doc, line.trim(), cite, li);
         continue;
       }
     }
     closeList();
-    para.push(line.trim());
+    para.push(line);
   }
   flushPara();
   target.replaceChildren(frag);

@@ -14,6 +14,7 @@
           <tbody>
             <tr><td><code>data-index</code></td><td>URL du fichier d'index écrit par <code>murmur index</code>, par exemple <code>/murmur-index.json</code>. Sans lui, le widget lit la page courante.</td></tr>
             <tr><td><code>data-endpoint</code></td><td>URL de votre proxy compatible OpenAI (https). Les visiteurs discutent alors sans clé.</td></tr>
+            <tr><td><code>data-local</code></td><td><code>true</code> : répondre avec un modèle qui tourne dans le navigateur du visiteur sur WebGPU (LFM3 1.7B, environ 1,1 Go téléchargé une fois, après accord du visiteur). Ni clé ni serveur.</td></tr>
             <tr><td><code>data-provider</code></td><td>Fournisseur présélectionné pour les visiteurs qui apportent leur clé : <code>openai</code>, <code>anthropic</code>, <code>google</code>, <code>mistral</code>, <code>openrouter</code>, <code>groq</code>…</td></tr>
             <tr><td><code>data-model</code></td><td>Identifiant du modèle : celui présélectionné pour les visiteurs, ou celui demandé à votre proxy.</td></tr>
             <tr><td><code>data-instructions</code></td><td>Vos consignes à l'assistant : qui il est, son ton, ce dont il ne doit pas parler.</td></tr>
@@ -47,7 +48,10 @@
         <pre tabindex="0"><code>- run: npx murmur-rag index ./_site --base /mon-depot/ --out ./_site/murmur-index.json</code></pre>
 
         <h2 id="modeles-et-cles">Modèles d'IA et clés</h2>
-        <p>Une clé écrite dans une page web est lisible par tout le monde : murmur ne vous demande donc jamais d'en mettre une. Choisissez l'une des deux façons.</p>
+        <p>Une clé écrite dans une page web est lisible par tout le monde : murmur ne vous demande donc jamais d'en mettre une. Choisissez l'une des trois façons.</p>
+        <h3 id="dans-le-navigateur">Un modèle dans le navigateur du visiteur</h3>
+        <p>Avec <code>data-local="true"</code>, personne n'a besoin de clé : le navigateur fait tourner <a href="https://huggingface.co/LiquidAI/LFM3-1.7B">LFM3 1.7B</a> de Liquid AI (octobre 2026), dans ses poids 4 bits pour WebGPU, via Transformers.js. Avant la première réponse, le widget demande l'accord pour télécharger environ 1,1 Go ; les poids restent ensuite dans le cache du navigateur, et les questions ne quittent jamais l'appareil.</p>
+        <p>Il faut WebGPU (Chrome, Edge ou Safari récents) et un GPU avec environ 1,5 Go de mémoire libre. Sur un portable récent, le premier téléchargement prend une à deux minutes, un rechargement depuis le cache quelques secondes, et une réponse quelques secondes. Un modèle de 1,7 milliard de paramètres est moins précis qu'un modèle hébergé : réservez-le aux sites simples, ou laissez le visiteur le choisir dans les réglages IA, où il est proposé à côté de sa propre clé.</p>
         <h3 id="votre-proxy">Votre proxy garde la clé</h3>
         <p>Déployez le <a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">Worker Cloudflare d'exemple</a>. Il garde votre clé en secret, transmet les requêtes de chat à n'importe quelle API compatible OpenAI (OpenRouter, OpenAI, Groq, Mistral…), n'accepte que l'origine de votre site, fixe le modèle et plafonne la longueur de chaque réponse. Ensuite :</p>
         <pre tabindex="0"><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
@@ -67,6 +71,7 @@
             <tr><td><code>murmur-rag/rag</code></td><td><code>bm25Retriever</code>, <code>buildIndex</code>, <code>splitText</code>, <code>formatSources</code>, <code>citedSources</code>, l'interface <code>Retriever</code>.</td></tr>
             <tr><td><code>murmur-rag/indexer</code></td><td><code>indexPages</code>, <code>indexDocument</code>, <code>extractSections</code>.</td></tr>
             <tr><td><code>murmur-rag/llm</code></td><td><code>proxySettings</code>, <code>visitorStore</code>, <code>resolveSettings</code>, au-dessus de llm-connect.</td></tr>
+            <tr><td><code>murmur-rag/local</code></td><td><code>localModel</code>, un modèle AI SDK qui tourne dans la page sur WebGPU ; <code>hasWebGPU</code>, <code>DEFAULT_LOCAL_MODEL</code>. Demande <code>@huggingface/transformers</code>.</td></tr>
             <tr><td><code>murmur-rag/widget</code></td><td><code>mountMurmur</code>, <code>defineMurmurChat</code>, <code>MurmurChat</code>, <code>renderMarkdown</code>.</td></tr>
             <tr><td><code>murmur-rag/embed</code></td><td>L'entrée de la balise script : lit les attributs <code>data-</code> et monte la bulle.</td></tr>
           </tbody>

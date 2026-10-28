@@ -62,6 +62,8 @@ export function extractSections(
       return;
     }
     if (tag === "BR") cur.text += "\n";
+    // Table cells of a row read as "a | b", not "ab".
+    if ((tag === "TD" || tag === "TH") && !/(^|\n)\s*$/.test(cur.text)) cur.text += " | ";
     const block = BLOCK.test(tag);
     if (block) cur.text += "\n\n";
     if (tag === "LI") cur.text += "- ";

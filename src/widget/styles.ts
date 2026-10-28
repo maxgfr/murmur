@@ -109,6 +109,13 @@ header .icon-btn:focus-visible { outline-color: var(--accent-ink); }
 .msg code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; background: var(--raised); padding: 0.1em 0.35em; border-radius: 5px; }
 .msg pre { margin: 0 0 0.6em; padding: 10px 12px; background: var(--raised); border-radius: 10px; overflow-x: auto; }
 .msg pre code { background: none; padding: 0; }
+.msg .table { margin: 0 0 0.6em; overflow-x: auto; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); }
+.msg table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.msg th, .msg td { padding: 6px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.msg tr:last-child td { border-bottom: 0; }
+.msg th { font-weight: 650; background: var(--raised); }
+.msg blockquote { margin: 0 0 0.6em; padding: 2px 0 2px 12px; color: var(--muted); box-shadow: inset 1px 0 0 var(--line); }
+.msg hr { margin: 0.8em 0; border: 0; border-top: 1px solid var(--line); }
 .user {
   align-self: flex-end; max-width: 85%;
   padding: 9px 14px; border-radius: 16px 16px 4px 16px;
@@ -195,6 +202,17 @@ footer a:hover { text-decoration: underline; }
 .result.ok { color: inherit; }
 .result.ok::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--lamp); }
 .result.fail { color: var(--danger); }
+.local-choice { display: grid; gap: 6px; padding: 14px; border-radius: 12px; background: var(--raised); }
+.local-choice small { color: var(--muted); font-size: 12.5px; }
+.local-choice .link-btn { margin-top: 2px; }
+p.or { margin: 0; color: var(--muted); font-size: 13px; text-align: center; }
+.consent { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: var(--raised); }
+.consent p { margin: 0; }
+.status .grow { display: grid; gap: 6px; flex: 1; }
+progress { width: 100%; height: 6px; appearance: none; border: 0; border-radius: 3px; background: var(--line); overflow: hidden; }
+progress::-webkit-progress-bar { background: var(--line); }
+progress::-webkit-progress-value { background: var(--lamp); }
+progress::-moz-progress-bar { background: var(--lamp); }
 .link-btn { padding: 0; border: 0; background: none; color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 0.2em; justify-self: start; }
 
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

@@ -16,7 +16,7 @@
   "board.q1": "How do I add it to my site?",
   "board.q2": "Where is my API key stored?",
   "board.q3": "Does it work on GitHub Pages?",
-  "board.note": "This demo has no key of its own: bring yours (it stays encrypted in your browser) or point it at Ollama on your machine.",
+  "board.note": "This demo has no key of its own: run a small model in your browser (WebGPU, about 1.1 GB once), bring your key (it stays encrypted in your browser) or point it at Ollama on your machine.",
   "board.greeting": "Ask me anything about murmur. I answer from the pages of this site and link to them.",
   "field.strip": "Every jack is a section of this site; cited ones light up.",
   "field.loading": "Plugging in the index…",
@@ -75,7 +75,7 @@
   "how.s3title": "Answer",
   "how.s3text": "The model writes from those passages only, cites them [1] [2] and links to the heading they come from. If your pages do not say it, it says so.",
   "keys.title": "Your AI key never goes in your HTML.",
-  "keys.intro": "Anything in a web page can be read by anyone. murmur gives you two ways around it.",
+  "keys.intro": "Anything in a web page can be read by anyone. murmur gives you three ways around it.",
   "keys.proxyTitle": "Your proxy holds it",
   "keys.proxyText": "Deploy the example Cloudflare Worker (free tier) with your key as a secret. It only accepts your site's origin, fixes the model and caps each answer. Visitors chat with no setup.",
   "keys.proxyLink": "The Worker, ready to deploy",
@@ -119,5 +119,12 @@
   "wire.groupKey": "The key",
   "wire.groupContent": "The content",
   "wire.groupLook": "The look",
-  "play.line": "Your text, on the line"
+  "play.line": "Your text, on the line",
+  "wire.modeLocal": "In the visitor's browser",
+  "wire.modeLocalHint": "No key, no server. A 1.1 GB model downloads once (WebGPU).",
+  "wire.localHint": "LFM3 1.7B by Liquid AI runs on the visitor's GPU. The first question asks before downloading; answers are slower and less precise than a hosted model.",
+  "keys.localTitle": "No key at all",
+  "keys.localText": "With data-local, the visitor's browser runs LFM3 1.7B (Liquid AI, October 2026) on WebGPU. About 1.1 GB downloads once, after the visitor agrees; then questions never leave the device. Slower and less precise than a hosted model.",
+  "limits.l5": "The in-browser model is small",
+  "limits.l5text": "LFM3 1.7B needs WebGPU (recent Chrome, Edge, Safari) and about 1.1 GB on first use. It answers in seconds once loaded, with less nuance than a hosted model."
 }

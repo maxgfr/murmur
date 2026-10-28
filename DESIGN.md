@@ -174,7 +174,7 @@ Strips 4px, plates 6px, controls 10px, panels 14px, chips and the launcher fully
 
 ### Cards / Containers
 
-- **Mode panels**: one bakelite, one ivory-deep, side by side, for the two ways to hold a key. Not a card grid.
+- **Mode panels**: one bakelite, two ivory-deep, side by side, for the three ways to answer without a key in the page (proxy, in-browser model, visitor's key). The lit lamp marks the ones that need nothing from the visitor. Not a card grid of equal features: each carries its own attribute and link.
 
 ### Inputs / Fields
 
@@ -191,6 +191,8 @@ Strips 4px, plates 6px, controls 10px, panels 14px, chips and the launcher fully
 ### Widget (`<murmur-chat>`)
 
 - Launcher pill with a lamp; panel 400×640 max, full screen under 480px; bakelite header; visitor messages in accent bubbles, answers as plain prose with ringed citation numbers and a numbered sources list; settings view drawn from llm-connect's store. Restyled only through `--murmur-accent`, `--murmur-accent-ink`, `--murmur-font`, `--murmur-radius`, `--murmur-lamp`, `--murmur-z`.
+- **In-browser model**: offered first in the settings as a raised block (primary button, size and WebGPU note under it), then "or connect a provider with your key". Before any download, a raised consent card in the conversation names the model and its size in the visitor's language (1,1 Go / 1.1 GB) with one primary action; while it loads, the status line carries a lamp-amber progress bar and the bytes. Without WebGPU, the same card says why and offers the key instead; nothing is downloaded.
+- **Answer rendering**: paragraphs, lists (kept whole across blank lines, numbering resumed), fenced code (inside its list item when indented), tables in a scrollable hairline frame, quotes with a 1px rule, hard breaks. Code and tables that scroll are focusable.
 
 ## Do's and Don'ts
 

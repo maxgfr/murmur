@@ -674,7 +674,7 @@ html {
 }
 .toggle {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
   padding: 4px;
   border-radius: 14px;
@@ -843,7 +843,7 @@ html {
 /* Two ways to hold the key */
 .modes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: calc(var(--u) * 3);
 }
 .mode {

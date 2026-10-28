@@ -1,5 +1,11 @@
 import { type LanguageModel, type ModelMessage, streamText } from "ai";
-import { citedSources, estimateTokens, formatSources, groundingRules } from "../rag/ground";
+import {
+  citedSources,
+  cleanAnswer,
+  estimateTokens,
+  formatSources,
+  groundingRules,
+} from "../rag/ground";
 import { bm25Retriever, type Retriever } from "../rag/retriever";
 import type { MurmurIndex, Passage } from "../rag/types";
 
@@ -107,6 +113,7 @@ export function createMurmur(options: MurmurOptions): Murmur {
             text += part.text;
             yield part.text;
           }
+          text = cleanAnswer(text);
           settle({ text, cited: citedSources(text, passages.length) });
         } catch (error) {
           fail(error);

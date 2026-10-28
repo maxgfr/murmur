@@ -96,4 +96,11 @@ describe("extractSections edge cases", () => {
         .sections,
     ).toEqual([]);
   });
+  test("table cells are kept apart", () => {
+    const html =
+      "<main><h2>Options</h2><table><tr><th>Option</th><th>Effect</th></tr><tr><td><code>--out</code></td><td>Where to write</td></tr></table></main>";
+    const text = extractSections(parseHtml(html)).sections[0]?.text ?? "";
+    expect(text).toContain("Option | Effect");
+    expect(text).toContain("--out | Where to write");
+  });
 });

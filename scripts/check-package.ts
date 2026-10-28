@@ -32,6 +32,8 @@ import { proxySettings } from "murmur-rag/llm";
 // The browser entry points must import on a server (SSR) without touching the DOM.
 await import("murmur-rag/widget");
 await import("murmur-rag/embed");
+const local = await import("murmur-rag/local");
+if (local.DEFAULT_LOCAL_MODEL.id !== "onnx-community/LFM3-1.7B-ONNX" || await local.hasWebGPU()) throw new Error("local");
 const index = JSON.parse(readFileSync("idx.json", "utf8"));
 if (!isMurmurIndex(index)) throw new Error("bad index");
 const hits = await bm25Retriever(index).search("combien coûte le plan pro");
@@ -52,6 +54,9 @@ import { indexPages, type PageInput } from "murmur-rag/indexer";
 import { proxySettings, type LlmConfig } from "murmur-rag/llm";
 import { mountMurmur, type MurmurChat, type WidgetOptions } from "murmur-rag/widget";
 import { optionsFromDataset } from "murmur-rag/embed";
+import { localModel, type LocalModelSpec } from "murmur-rag/local";
+const spec: LocalModelSpec = { id: "x", dtype: "q4f16", name: "x", sizeMB: 1 };
+export const lm = localModel({ spec });
 const index: MurmurIndex = { version: 1, generatedAt: "", docs: [], chunks: [] };
 const retriever: Retriever = bm25Retriever(index);
 const page: PageInput = { url: "/", markdown: "# x" };
