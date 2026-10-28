@@ -12,7 +12,11 @@ export function optionsFromDataset(data: DOMStringMap, base: string): WidgetOpti
   if (data.provider) llm.provider = data.provider;
   if (data.model) llm.model = data.model;
   if (data.endpoint) llm.endpoint = data.endpoint;
-  if (data.apiKey) llm.apiKey = data.apiKey;
+  // A key in the page can be read by anyone: data-api-key (murmur 1.3) is refused, not used.
+  if (data.apiKey && typeof console !== "undefined")
+    console.error(
+      'murmur: data-api-key is ignored: a key in the page can be read by anyone. Keep it in a Worker (data-endpoint), run the model in the browser (data-mode="local"), or let visitors use their own key.',
+    );
   if (Object.keys(llm).length) o.llm = llm;
   if (data.instructions) o.instructions = data.instructions;
   if (data.lang) o.lang = data.lang;

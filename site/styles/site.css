@@ -290,14 +290,6 @@ html {
   background: transparent;
   box-shadow: inset 0 0 0 2px var(--ivory-line);
 }
-/* A patched jack holds the plug: bakelite head in a brass collar. */
-.socket.patched .jack::after {
-  inset: -4px;
-  background: var(--bakelite);
-  box-shadow:
-    inset 0 0 0 3px var(--brass-hi),
-    0 3px 6px -2px rgb(28 24 20 / 0.5);
-}
 .jack.ghost::after {
   background: var(--ivory-line);
   box-shadow: none;
@@ -394,12 +386,15 @@ html {
 .field-board > .strip {
   font-size: 13px;
 }
+/* Layers of the board: jacks and their names, then the cords, then the strips and the log. */
 .jackfield {
   display: grid;
   gap: calc(var(--u) * 2.5);
   align-content: start;
+}
+.jackfield .strip {
   position: relative;
-  z-index: 1;
+  z-index: 3;
 }
 .row {
   display: grid;
@@ -422,8 +417,10 @@ html {
 .socket .tag {
   max-width: 100%;
   padding: 0 4px;
-  border-radius: 3px;
-  background: var(--ivory);
+  /* Names stay readable where a cord crosses them, without hiding the cord. */
+  text-shadow:
+    0 0 2px var(--ivory),
+    0 0 3px var(--ivory);
   font-family: var(--display);
   font-size: 12px;
   font-weight: 600;
@@ -448,7 +445,7 @@ html {
   height: 100%;
   pointer-events: none;
   overflow: visible;
-  z-index: 0;
+  z-index: 2;
 }
 .cords path {
   fill: none;
@@ -475,7 +472,7 @@ html {
 }
 .oplog {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   margin: 0;
   padding: calc(var(--u) * 1.5) calc(var(--u) * 2);
   min-height: calc(var(--u) * 7);

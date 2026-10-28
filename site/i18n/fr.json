@@ -129,13 +129,9 @@
   "limits.l5text": "LFM3 1.7B demande WebGPU (Chrome, Edge, Safari récents) et environ 1,1 Go au premier usage. Une fois chargé il répond en quelques secondes, avec moins de finesse qu'un modèle hébergé.",
   "wire.modeAuto": "Navigateur, clé en option",
   "wire.modeAutoHint": "Le modèle du navigateur, et le visiteur peut brancher sa clé à la place.",
-  "wire.modeOwner": "Ma clé dans la page",
-  "wire.modeOwnerHint": "Le visiteur discute avec votre clé, lisible par tous.",
   "wire.preload": "Téléchargement",
   "wire.preloadQuestion": "À la première question",
   "wire.preloadOpen": "À l'ouverture de la bulle",
   "wire.preloadIdle": "Dès que la page est inactive",
-  "wire.preloadConsent": "Après accord du visiteur",
-  "wire.apiKey": "Votre clé API",
-  "wire.ownerWarn": "Cette clé sera dans votre HTML : n'importe qui peut la lire et la réutiliser. N'utilisez qu'une clé plafonnée (OpenRouter, une clé de projet restreinte), ou un Worker."
+  "wire.preloadConsent": "Après accord du visiteur"
 }

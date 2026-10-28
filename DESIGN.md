@@ -186,12 +186,14 @@ Strips 4px, plates 6px, controls 10px, panels 14px, chips and the launcher fully
 
 ### Jack field (signature)
 
-- One `.row` per page: a designation strip then a grid of sockets (lamp, brass jack, two-line tag), padded with ghost jacks to the row's 12. On `murmur:state`: retrieved passages blink, cited ones light and get a cord drawn from the console (cubic curve with sag, drawn in 700ms with `cubic-bezier(0.16, 1, 0.3, 1)`, staggered 140ms; instant under reduced motion).
+- One `.row` per page: a designation strip, then a grid of sockets (lamp, brass jack, a short engraved name: the heading up to its first pause, at most three words), padded with ghost jacks to the row's 12. On `murmur:state`: retrieved passages blink, cited ones light and get a cord drawn from the console (cubic curve with sag, drawn in 700ms with `cubic-bezier(0.16, 1, 0.3, 1)`, staggered 140ms, the plug fading in as it arrives; instant under reduced motion). Cords alternate red and black and end in a plug drawn over the jack.
+- Layers: jacks and their names, then the cords, then the strips and the operator log. Cords are never cut: names keep a soft ivory halo so they read where a cord crosses them.
 
 ### Widget (`<murmur-chat>`)
 
 - Launcher pill with a lamp; panel 400×640 max, full screen under 480px; bakelite header; visitor messages in accent bubbles, answers as plain prose with ringed citation numbers and a numbered sources list; settings view drawn from llm-connect's store. Restyled only through `--murmur-accent`, `--murmur-accent-ink`, `--murmur-font`, `--murmur-radius`, `--murmur-lamp`, `--murmur-z`.
 - **In-browser model**: offered first in the settings as a raised block (primary button, size and WebGPU note under it), then "or connect a provider with your key"; hidden when the mode leaves no choice. The download is discreet: a raised load bar between the conversation and the question field (label with percent and bytes in the visitor's language, 1,1 Go / 1.1 GB, then "preparing", and a lamp-amber progress bar) while the bubble's lamp blinks; it disappears once the model is ready. Only `preload: consent` shows a raised consent card naming the model and its size. Without WebGPU, a card says why and offers the key when the mode allows one; nothing is downloaded.
+- **Citations**: numbered 1, 2, 3 in the order the answer first cites them, in the text and in the sources list alike.
 - **Answer rendering**: paragraphs, lists (kept whole across blank lines, numbering resumed), fenced code (inside its list item when indented), tables in a scrollable hairline frame, quotes with a 1px rule, hard breaks. Code and tables that scroll are focusable.
 
 ## Do's and Don'ts

@@ -16,7 +16,6 @@
             <tr><td><code>data-endpoint</code></td><td>URL de votre proxy compatible OpenAI (https). Les visiteurs discutent alors sans clé.</td></tr>
             <tr><td><code>data-mode</code></td><td><code>proxy</code>, <code>local</code>, <code>auto</code> (par défaut) ou <code>key</code> : qui répond (voir <a href="#modeles-et-cles">Modèles d'IA et clés</a>).</td></tr>
             <tr><td><code>data-preload</code></td><td>Quand le modèle du navigateur se télécharge : <code>question</code> (par défaut), <code>open</code>, <code>idle</code> ou <code>consent</code>.</td></tr>
-            <tr><td><code>data-api-key</code></td><td>Votre propre clé, utilisée pour chaque visiteur. Publique : seulement une clé plafonnée.</td></tr>
             <tr><td><code>data-local</code></td><td><code>false</code> désactive le modèle qui tourne dans le navigateur du visiteur, utilisé par défaut quand il n'y a pas de proxy : le visiteur a alors besoin de sa propre clé.</td></tr>
             <tr><td><code>data-provider</code></td><td>Fournisseur présélectionné pour les visiteurs qui apportent leur clé : <code>openai</code>, <code>anthropic</code>, <code>google</code>, <code>mistral</code>, <code>openrouter</code>, <code>groq</code>…</td></tr>
             <tr><td><code>data-model</code></td><td>Identifiant du modèle : celui présélectionné pour les visiteurs, ou celui demandé à votre proxy.</td></tr>
@@ -51,14 +50,14 @@
         <pre tabindex="0"><code>- run: npx murmur-rag index ./_site --base /mon-depot/ --out ./_site/murmur-index.json</code></pre>
 
                 <h2 id="modeles-et-cles">Modèles d'IA et clés</h2>
-        <p>Choisissez comment la bulle répond avec <code>data-mode</code>. Une clé écrite dans une page web est lisible par tout le monde : les deux premiers modes la gardent hors de la page.</p>
+        <p>Choisissez comment la bulle répond avec <code>data-mode</code>. Une clé écrite dans une page web est lisible par tout le monde, donc murmur n'en prend jamais : votre clé reste dans votre Worker, et celle d'un visiteur dans son propre navigateur.</p>
         <table>
           <thead><tr><th><code>data-mode</code></th><th>Qui répond</th></tr></thead>
           <tbody>
             <tr><td><code>proxy</code></td><td>Votre Worker, qui garde votre clé. Implicite avec <code>data-endpoint</code>. Ce qu'utilisent la plupart des sites.</td></tr>
             <tr><td><code>local</code></td><td>Un modèle dans le navigateur du visiteur, et rien d'autre : pas de réglages de clé.</td></tr>
-            <tr><td><code>auto</code> (par défaut)</td><td>Votre proxy ou votre clé s'ils sont définis ; sinon le modèle du navigateur, le visiteur restant libre de brancher sa propre clé.</td></tr>
-            <tr><td><code>key</code></td><td>Une clé seulement : la vôtre (<code>data-api-key</code>), sinon celle de chaque visiteur.</td></tr>
+            <tr><td><code>auto</code> (par défaut)</td><td>Votre proxy s'il est défini ; sinon le modèle du navigateur, le visiteur restant libre de brancher sa propre clé.</td></tr>
+            <tr><td><code>key</code></td><td>La clé de chaque visiteur, rien d'autre.</td></tr>
           </tbody>
         </table>
         <h3 id="votre-proxy">Votre Worker garde la clé</h3>
@@ -83,8 +82,6 @@
         <h3 id="cle-du-visiteur">Chaque visiteur apporte sa clé</h3>
         <p>Avec <code>data-mode="key"</code>, ou depuis les réglages IA dans le mode par défaut, le visiteur choisit un fournisseur et un modèle, colle une clé, la teste et enregistre. <a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">llm-connect</a> chiffre la clé en AES-GCM sous une clé que la page ne peut pas exporter, la garde dans le navigateur (pour la session, ou sur l'appareil si le visiteur le demande) et ne l'envoie qu'au fournisseur choisi. Le visiteur peut aussi brancher le widget sur Ollama ou LM Studio sur sa propre machine.</p>
         <p>Le navigateur appelle directement le fournisseur, qui doit donc accepter les appels depuis une page web (CORS) : c'est le cas d'OpenAI, Anthropic, Google, Mistral, OpenRouter, Groq, Together, DeepInfra, xAI et des serveurs locaux avec CORS activé.</p>
-        <h3 id="cle-du-proprietaire">Votre clé dans la page</h3>
-        <p><code>data-api-key</code> avec <code>data-provider</code> (et <code>data-model</code>, sinon le modèle recommandé du fournisseur) répond à chaque visiteur avec votre clé. Elle est dans votre HTML : n'importe qui peut la lire et l'utiliser ailleurs. N'utilisez qu'une clé plafonnée (une clé OpenRouter avec une limite de crédit, une clé de projet restreinte), et préférez un Worker.</p>
 
         <h2 id="paquet-npm">Paquet npm</h2>
         <pre tabindex="0"><code>npm install murmur-rag</code></pre>

@@ -142,12 +142,20 @@ export function switchboard(
           });
         }
       }
+      // The plug sits in the jack: a bakelite head in a brass collar, drawn over it.
       const plug = document.createElementNS(SVG, "circle");
       plug.setAttribute("cx", String(ex));
       plug.setAttribute("cy", String(ey));
-      plug.setAttribute("r", "9");
+      plug.setAttribute("r", "11");
       plug.setAttribute("class", "plug");
       cord.append(plug);
+      if (animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        plug.animate([{ opacity: 0 }, { opacity: 1 }], {
+          duration: 160,
+          delay: 560 + i * 140,
+          fill: "backwards",
+        });
+      }
     });
   }
 

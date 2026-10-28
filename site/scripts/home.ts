@@ -87,14 +87,10 @@ function config(): { attrs: [string, string][]; options: WidgetOptions } {
     options.mode = "local";
   } else {
     // "auto" is the widget's default: nothing to write. The provider and model are what a
-    // visitor finds preselected, or what the owner's key calls.
+    // visitor finds preselected when they connect their own key.
     if (mode === "key") {
       add("data-mode", "key");
       options.mode = "key";
-    }
-    if (mode === "owner") {
-      add("data-api-key", value("apiKey"));
-      if (value("apiKey")) llm.apiKey = value("apiKey");
     }
     add("data-provider", value("provider"));
     add("data-model", value("model"));

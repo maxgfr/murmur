@@ -32,10 +32,10 @@ export interface WidgetOptions {
   /** Open the panel on load. */
   open?: boolean;
   /**
-   * How the widget answers. `auto` (default): the owner's proxy or key if set, else the model in
-   * the visitor's browser with their own key as an option. `proxy`: only `llm.endpoint`. `local`:
-   * only the in-browser model, no key settings. `key`: only a key, the owner's `llm.apiKey` or
-   * else each visitor's own.
+   * How the widget answers, never with a key in the page. `auto` (default): the owner's proxy if
+   * set, else the model in the visitor's browser with their own key as an option. `proxy`: only
+   * `llm.endpoint`. `local`: only the in-browser model, no key settings. `key`: only each
+   * visitor's own key.
    */
   mode?: WidgetMode;
   /**
@@ -69,7 +69,7 @@ export interface LocalState {
   progress?: LoadProgress;
 }
 
-type Mode = "custom" | "local" | "owner" | "proxy" | "visitor";
+type Mode = "custom" | "local" | "proxy" | "visitor";
 
 /** Passages are cut down for a model running in the page: a long prompt is slow to read there. */
 const LOCAL_SEARCH = { limit: 4, budgetTokens: 1500 };
@@ -100,14 +100,13 @@ export class ChatSession {
   }
 
   /**
-   * How this session answers: your own model; then the owner's proxy, then the owner's key;
-   * then the visitor's own key if they chose one; else the model in the browser.
+   * How this session answers: your own model; then the owner's proxy; then the visitor's own
+   * key if they chose one; else the model in the browser.
    */
   get mode(): Mode {
     const m = this.configured;
     if (this.options.model) return "custom";
     if (m === "proxy" || (m === "auto" && this.options.llm?.endpoint)) return "proxy";
-    if ((m === "auto" || m === "key") && this.options.llm?.apiKey) return "owner";
     if (m === "local") return "local";
     if (m === "key" || !this.localAllowed) return "visitor";
     return readLocal(`${this.key}-local`) === "0" ? "visitor" : "local";
@@ -118,14 +117,14 @@ export class ChatSession {
     const m = this.configured;
     if (this.options.model || m === "proxy" || m === "key") return false;
     if (m === "local") return true;
-    return !this.options.llm?.endpoint && !this.options.llm?.apiKey && this.options.local !== false;
+    return !this.options.llm?.endpoint && this.options.local !== false;
   }
 
   /** Whether visitors may connect their own key (the AI settings). */
   get keyAllowed(): boolean {
     const m = this.configured;
     if (this.options.model || m === "proxy" || m === "local") return false;
-    return !this.options.llm?.endpoint && !this.options.llm?.apiKey;
+    return !this.options.llm?.endpoint;
   }
 
   /** Where the in-browser model is, and a way to follow it. */
@@ -242,7 +241,6 @@ export class ChatSession {
     const llm = await import("../llm/index");
     const config = this.options.llm ?? {};
     if (mode === "proxy") return llm.proxySettings(config);
-    if (mode === "owner") return llm.ownerKeySettings(config, this.options.catalogUrl);
     return llm.resolveSettings({ ...config, endpoint: "" }, await this.store());
   }
 
