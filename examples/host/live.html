@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embed cross-origin · murmur</title>
+    <style>body { margin: 0 auto; max-width: 680px; padding: 48px 20px; font: 18px/1.6 Georgia, serif; }</style>
+  </head>
+  <body>
+    <main>
+      <h1>Boulangerie Le Fournil</h1>
+      <p>Cette page charge le script publié sur maxgfr.github.io depuis une autre origine, en mode proxy vers le faux endpoint local (scripts/mock-llm.ts). Sans index, le widget lit cette page.</p>
+      <h2 id="horaires">Horaires</h2>
+      <p>Du mardi au samedi, de 7 h à 19 h 30. Fermé le lundi.</p>
+    </main>
+    <script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
+      data-endpoint="http://localhost:4317/mock/v1" data-model="mock" data-accent="#7a3e1d" data-storage-key="live-test"></script>
+  </body>
+</html>
