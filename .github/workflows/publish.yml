@@ -33,13 +33,11 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint
       - run: bun run test
-      # The first version is published by hand: npm's trusted publishing (OIDC, no token)
-      # only attaches to a package that already exists.
+      # Every conventional commit on main is released (see .releaserc.json): semantic-release
+      # tags it, publishes to npm through trusted publishing (OIDC, no token, with provenance)
+      # and writes the GitHub release. The version lives in the tags, never committed back.
       - name: Release
-        run: |
-          if npm view murmur-rag version >/dev/null 2>&1; then
-            bun run release
-          else
-            echo "::notice::murmur-rag is not on npm yet; publish its first version by hand"
-          fi
+        run: bun run release
