@@ -17,6 +17,7 @@ async function lib() {
       "src/rag/index.ts",
       "src/indexer/index.ts",
       "src/llm/index.ts",
+      "src/local/index.ts",
       "src/widget/index.ts",
       "src/embed.ts",
     ],

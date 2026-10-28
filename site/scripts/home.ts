@@ -77,7 +77,10 @@ function config(): { attrs: [string, string][]; options: WidgetOptions } {
   const add = (key: string, v: string) => v && attrs.push([key, v]);
   add("data-index", value("index"));
   if (value("index")) options.index = value("index");
-  if (mode === "proxy") {
+  if (mode === "local") {
+    add("data-local", "true");
+    options.local = true;
+  } else if (mode === "proxy") {
     add("data-endpoint", value("endpoint"));
     add("data-model", value("proxyModel"));
     if (value("endpoint")) llm.endpoint = value("endpoint");

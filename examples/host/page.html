@@ -9,18 +9,20 @@
   <body>
     <main>
       <h1>Boulangerie Le Fournil</h1>
-      <p>Sans index : le widget lit cette page. Le modèle se choisit dans l'URL (?model=mock, slow ou fail-401).</p>
+      <p>Sans index : le widget lit cette page. Le modèle se choisit dans l'URL (?model=mock, slow ou fail-401, ou ?local=1 pour le modèle qui tourne dans le navigateur).</p>
       <h2 id="horaires">Horaires</h2>
       <p>Du mardi au samedi, de 7 h à 19 h 30. Fermé le lundi.</p>
       <h2 id="commandes">Commandes</h2>
       <p>Les gâteaux de 6 parts et plus se commandent 48 heures à l'avance.</p>
     </main>
     <script type="module">
-      const model = new URLSearchParams(location.search).get("model") || "mock";
+      const params = new URLSearchParams(location.search);
+      const model = params.get("model") || "mock";
       const s = document.createElement("script");
       s.type = "module";
       s.src = "/murmur/cdn/murmur.js";
-      Object.assign(s.dataset, { endpoint: "http://localhost:4317/mock/v1", model, storageKey: `host-${model}` });
+      if (params.get("local")) Object.assign(s.dataset, { local: "true", storageKey: "host-local" });
+      else Object.assign(s.dataset, { endpoint: "http://localhost:4317/mock/v1", model, storageKey: `host-${model}` });
       document.body.append(s);
     </script>
   </body>

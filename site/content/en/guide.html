@@ -14,6 +14,7 @@
           <tbody>
             <tr><td><code>data-index</code></td><td>URL of the index file written by <code>murmur index</code>, for example <code>/murmur-index.json</code>. Without it, the widget reads the current page.</td></tr>
             <tr><td><code>data-endpoint</code></td><td>URL of your OpenAI-compatible proxy (https). Visitors then chat without a key.</td></tr>
+            <tr><td><code>data-local</code></td><td><code>true</code>: answer with a model that runs in the visitor's browser on WebGPU (LFM3 1.7B, about 1.1 GB downloaded once, after the visitor agrees). No key, no server.</td></tr>
             <tr><td><code>data-provider</code></td><td>Provider preselected for visitors who bring their own key: <code>openai</code>, <code>anthropic</code>, <code>google</code>, <code>mistral</code>, <code>openrouter</code>, <code>groq</code>…</td></tr>
             <tr><td><code>data-model</code></td><td>Model id: the one preselected for visitors, or the one asked of your proxy.</td></tr>
             <tr><td><code>data-instructions</code></td><td>Your instructions to the assistant: who it is, its tone, what it should not discuss.</td></tr>
@@ -47,7 +48,10 @@
         <pre tabindex="0"><code>- run: npx murmur-rag index ./_site --base /my-repo/ --out ./_site/murmur-index.json</code></pre>
 
         <h2 id="ai-models-and-keys">AI models and keys</h2>
-        <p>A key written in a web page can be read by anyone, so murmur never asks you to put one there. Pick one of two ways.</p>
+        <p>A key written in a web page can be read by anyone, so murmur never asks you to put one there. Pick one of three ways.</p>
+        <h3 id="in-the-browser">A model in the visitor's browser</h3>
+        <p>With <code>data-local="true"</code>, nobody needs a key: the browser runs <a href="https://huggingface.co/LiquidAI/LFM3-1.7B">LFM3 1.7B</a> by Liquid AI (October 2026), in its 4-bit WebGPU weights, through Transformers.js. Before the first answer the widget asks to download about 1.1 GB; the weights then stay in the browser's cache, and questions never leave the device.</p>
+        <p>It needs WebGPU (recent Chrome, Edge or Safari) and a GPU with about 1.5 GB of memory to spare. On a recent laptop the first download takes a minute or two, a reload from the cache a few seconds, and an answer a few seconds. A 1.7B model is less precise than a hosted one: keep it for simple sites, or let visitors choose it from the AI settings, where it is offered next to their own key.</p>
         <h3 id="your-proxy">Your proxy holds the key</h3>
         <p>Deploy the <a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">example Cloudflare Worker</a>. It keeps your key as a secret, forwards chat requests to any OpenAI-compatible API (OpenRouter, OpenAI, Groq, Mistral…), accepts only your site's origin, fixes the model and caps the length of each answer. Then:</p>
         <pre tabindex="0"><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
@@ -67,6 +71,7 @@
             <tr><td><code>murmur-rag/rag</code></td><td><code>bm25Retriever</code>, <code>buildIndex</code>, <code>splitText</code>, <code>formatSources</code>, <code>citedSources</code>, the <code>Retriever</code> interface.</td></tr>
             <tr><td><code>murmur-rag/indexer</code></td><td><code>indexPages</code>, <code>indexDocument</code>, <code>extractSections</code>.</td></tr>
             <tr><td><code>murmur-rag/llm</code></td><td><code>proxySettings</code>, <code>visitorStore</code>, <code>resolveSettings</code>, on top of llm-connect.</td></tr>
+            <tr><td><code>murmur-rag/local</code></td><td><code>localModel</code>, an AI SDK model running in the page on WebGPU; <code>hasWebGPU</code>, <code>DEFAULT_LOCAL_MODEL</code>. Needs <code>@huggingface/transformers</code>.</td></tr>
             <tr><td><code>murmur-rag/widget</code></td><td><code>mountMurmur</code>, <code>defineMurmurChat</code>, <code>MurmurChat</code>, <code>renderMarkdown</code>.</td></tr>
             <tr><td><code>murmur-rag/embed</code></td><td>The script-tag entry: reads <code>data-</code> attributes and mounts the bubble.</td></tr>
           </tbody>

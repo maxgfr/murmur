@@ -1,6 +1,7 @@
 import type { LanguageModel } from "ai";
 import type { Murmur, Turn } from "../core/murmur";
 import type { LlmConfig, LlmSettings, LlmSettingsStore } from "../llm/index";
+import type { LoadProgress, LocalModelSpec } from "../local/index";
 import type { Retriever } from "../rag/retriever";
 import type { MurmurIndex, Passage } from "../rag/types";
 import type { Messages } from "./i18n";
@@ -30,6 +31,11 @@ export interface WidgetOptions {
   storageKey?: string;
   /** Open the panel on load. */
   open?: boolean;
+  /**
+   * Answer with a model that runs in the visitor's browser on WebGPU: `true` for the default
+   * (LFM3 1.7B, about 1.1 GB, downloaded once after the visitor agrees), or your own spec.
+   */
+  local?: boolean | LocalModelSpec;
 }
 
 export interface ChatTurn extends Turn {
@@ -38,7 +44,10 @@ export interface ChatTurn extends Turn {
   error?: string;
 }
 
-type Mode = "custom" | "proxy" | "visitor";
+type Mode = "custom" | "local" | "proxy" | "visitor";
+
+/** Passages are cut down for a model running in the page: a long prompt is slow to read there. */
+const LOCAL_SEARCH = { limit: 4, budgetTokens: 1500 };
 
 /** Everything the widget does except drawing: index, model settings, history. */
 export class ChatSession {
@@ -46,8 +55,12 @@ export class ChatSession {
   private engine: Promise<Murmur> | null = null;
   private storePromise: Promise<LlmSettingsStore> | null = null;
   private readonly historyKey: string;
+  private readonly key: string;
+  /** Called while the in-browser model downloads. */
+  onProgress: ((progress: LoadProgress) => void) | null = null;
 
   constructor(readonly options: WidgetOptions) {
+    this.key = options.storageKey ?? "murmur";
     this.historyKey = `${options.storageKey ?? "murmur"}-chat:${location.pathname.split("/")[1] ?? ""}`;
     try {
       const saved = sessionStorage.getItem(this.historyKey);
@@ -59,7 +72,34 @@ export class ChatSession {
 
   get mode(): Mode {
     if (this.options.model) return "custom";
+    if (this.options.local || this.visitorChoseLocal) return "local";
     return this.options.llm?.endpoint ? "proxy" : "visitor";
+  }
+
+  /** The in-browser model this session would run. */
+  async localSpec(): Promise<LocalModelSpec> {
+    const { local } = this.options;
+    if (local && typeof local === "object") return local;
+    return (await import("../local/index")).DEFAULT_LOCAL_MODEL;
+  }
+
+  private get visitorChoseLocal(): boolean {
+    return readLocal(`${this.key}-local`) === "1";
+  }
+
+  /** The visitor picks the in-browser model (or goes back to a key). */
+  useLocal(on: boolean): void {
+    writeLocal(`${this.key}-local`, on ? "1" : null);
+    this.engine = null;
+  }
+
+  /** Whether the visitor must still agree to download the in-browser model. */
+  get needsDownloadConsent(): boolean {
+    return this.mode === "local" && readLocal(`${this.key}-local-consent`) !== "1";
+  }
+
+  agreeToDownload(): void {
+    writeLocal(`${this.key}-local-consent`, "1");
   }
 
   persist(): void {
@@ -100,6 +140,11 @@ export class ChatSession {
     return this.mode === "visitor" && !(await this.settings());
   }
 
+  /** Whether a model can run in this browser at all. */
+  async canRunLocally(): Promise<boolean> {
+    return (await import("../local/index")).hasWebGPU();
+  }
+
   private async loadIndex(): Promise<MurmurIndex> {
     const { index } = this.options;
     if (index && typeof index !== "string") return index;
@@ -122,15 +167,28 @@ export class ChatSession {
         this.options.retriever ??
           import("../rag/retriever").then(async (r) => r.bm25Retriever(await this.loadIndex())),
       ]);
+      const local = this.mode === "local";
       const model =
         this.options.model ??
-        (async () => {
-          const settings = await this.settings();
-          if (!settings) throw new SetupNeeded();
-          const { loadModel } = await import("../llm/index");
-          return loadModel(settings);
-        });
-      const opts: Parameters<typeof createMurmur>[0] = { retriever, model };
+        (local
+          ? async () => {
+              const { localModel } = await import("../local/index");
+              return localModel({
+                spec: await this.localSpec(),
+                onProgress: (p) => this.onProgress?.(p),
+              });
+            }
+          : async () => {
+              const settings = await this.settings();
+              if (!settings) throw new SetupNeeded();
+              const { loadModel } = await import("../llm/index");
+              return loadModel(settings);
+            });
+      const opts: Parameters<typeof createMurmur>[0] = {
+        retriever,
+        model,
+        ...(local ? LOCAL_SEARCH : {}),
+      };
       if (this.options.instructions) opts.instructions = this.options.instructions;
       if (this.options.lang) opts.language = this.options.lang;
       return createMurmur(opts);
@@ -168,7 +226,9 @@ export class ChatSession {
         turn.content += part;
         onText(turn.content, turn);
       }
-      turn.cited = (await answer.done).cited;
+      const done = await answer.done;
+      turn.content = done.text;
+      turn.cited = done.cited;
     } catch (error) {
       if (signal.aborted) {
         turn.cited = [];
@@ -186,15 +246,34 @@ export class ChatSession {
 
   /** The kind of failure, as an i18n key, plus the provider's message. */
   private async describe(error: unknown): Promise<string> {
+    if (error instanceof Error && error.name === "LocalModelError") {
+      return `local-${(error as Error & { code?: string }).code ?? "load"}|${error.message}`;
+    }
     try {
       const { describeError } = await import("../llm/index");
-      const settings = this.mode === "custom" ? null : await this.settings();
+      const settings =
+        this.mode === "custom" || this.mode === "local" ? null : await this.settings();
       const info = describeError(error, settings?.apiKey);
       return `${info.code}|${info.message}`;
     } catch {
       return `unknown|${error instanceof Error ? error.message : String(error)}`;
     }
   }
+}
+
+function readLocal(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeLocal(key: string, value: string | null): void {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {}
 }
 
 /** Thrown when the visitor must pick a model before asking. */

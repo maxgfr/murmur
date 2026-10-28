@@ -16,7 +16,7 @@
   "board.q1": "Comment l'ajouter à mon site ?",
   "board.q2": "Où est stockée ma clé API ?",
   "board.q3": "Ça marche sur GitHub Pages ?",
-  "board.note": "Cette démo n'a pas de clé à elle : utilisez la vôtre (elle reste chiffrée dans votre navigateur) ou un Ollama sur votre machine.",
+  "board.note": "Cette démo n'a pas de clé à elle : faites tourner un petit modèle dans votre navigateur (WebGPU, environ 1,1 Go une fois), utilisez votre clé (elle reste chiffrée dans votre navigateur) ou un Ollama sur votre machine.",
   "board.greeting": "Posez-moi une question sur murmur. Je réponds à partir des pages de ce site, avec les liens.",
   "field.strip": "Chaque jack est une rubrique de ce site ; ceux qui sont cités s'allument.",
   "field.loading": "Branchement de l'index…",
@@ -75,7 +75,7 @@
   "how.s3title": "Répondre",
   "how.s3text": "Le modèle écrit à partir de ces passages seulement, les cite [1] [2] et renvoie vers la rubrique d'origine. Si vos pages ne le disent pas, il le dit.",
   "keys.title": "Votre clé d'IA n'est jamais dans votre HTML.",
-  "keys.intro": "Tout ce qui est dans une page web est lisible par n'importe qui. murmur vous offre deux façons de l'éviter.",
+  "keys.intro": "Tout ce qui est dans une page web est lisible par n'importe qui. murmur vous offre trois façons de l'éviter.",
   "keys.proxyTitle": "Votre proxy la garde",
   "keys.proxyText": "Déployez le Worker Cloudflare d'exemple (offre gratuite) avec votre clé en secret. Il n'accepte que l'origine de votre site, fixe le modèle et plafonne chaque réponse. Le visiteur discute sans rien régler.",
   "keys.proxyLink": "Le Worker, prêt à déployer",
@@ -119,5 +119,12 @@
   "wire.groupKey": "La clé",
   "wire.groupContent": "Le contenu",
   "wire.groupLook": "L'apparence",
-  "play.line": "Votre texte, en ligne"
+  "play.line": "Votre texte, en ligne",
+  "wire.modeLocal": "Dans le navigateur du visiteur",
+  "wire.modeLocalHint": "Ni clé ni serveur. Un modèle de 1,1 Go se télécharge une fois (WebGPU).",
+  "wire.localHint": "LFM3 1.7B de Liquid AI tourne sur le GPU du visiteur. La première question demande avant de télécharger ; les réponses sont plus lentes et moins précises qu'avec un modèle hébergé.",
+  "keys.localTitle": "Aucune clé",
+  "keys.localText": "Avec data-local, le navigateur du visiteur fait tourner LFM3 1.7B (Liquid AI, octobre 2026) sur WebGPU. Environ 1,1 Go se télécharge une fois, après accord du visiteur ; ensuite les questions ne quittent plus l'appareil. Plus lent et moins précis qu'un modèle hébergé.",
+  "limits.l5": "Le modèle du navigateur est petit",
+  "limits.l5text": "LFM3 1.7B demande WebGPU (Chrome, Edge, Safari récents) et environ 1,1 Go au premier usage. Une fois chargé il répond en quelques secondes, avec moins de finesse qu'un modèle hébergé."
 }

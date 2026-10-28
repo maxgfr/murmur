@@ -10,6 +10,7 @@ export {
 } from "./chunk";
 export {
   citedSources,
+  cleanAnswer,
   estimateTokens,
   formatSources,
   groundingRules,

@@ -29,6 +29,7 @@ export function optionsFromDataset(data: DOMStringMap, base: string): WidgetOpti
   if (data.catalog) o.catalogUrl = new URL(data.catalog, base).href;
   if (data.storageKey) o.storageKey = data.storageKey;
   if (data.open === "true") o.open = true;
+  if (data.local === "true") o.local = true;
   return o;
 }
 

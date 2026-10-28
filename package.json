@@ -45,6 +45,10 @@
       "types": "./dist/types/llm/index.d.ts",
       "default": "./dist/lib/llm/index.js"
     },
+    "./local": {
+      "types": "./dist/types/local/index.d.ts",
+      "default": "./dist/lib/local/index.js"
+    },
     "./widget": {
       "types": "./dist/types/widget/index.d.ts",
       "default": "./dist/lib/widget/index.js"
@@ -103,7 +107,8 @@
     "linkedom": "^0.18.14",
     "llm-connect": "^2.5.0",
     "llm-models": "^1.14.0",
-    "minisearch": "^7.2.0"
+    "minisearch": "^7.2.0",
+    "@ai-sdk/provider": "^4.0.34"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
@@ -113,6 +118,15 @@
     "@types/bun": "^1.4.4",
     "conventional-changelog-conventionalcommits": "^9",
     "semantic-release": "^25.0.9",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "@huggingface/transformers": "^4.3.2"
+  },
+  "peerDependencies": {
+    "@huggingface/transformers": "^4.3.2"
+  },
+  "peerDependenciesMeta": {
+    "@huggingface/transformers": {
+      "optional": true
+    }
   }
 }
