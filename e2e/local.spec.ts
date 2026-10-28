@@ -10,6 +10,14 @@ async function webgpu(page: Page, available: boolean) {
   }, available);
 }
 
+async function ask(page: Page, question: string) {
+  const widget = page.locator("murmur-chat");
+  await widget.locator(".launcher").click();
+  await widget.getByRole("textbox").fill(question);
+  await widget.getByRole("textbox").press("Enter");
+  return widget;
+}
+
 test.describe("model in the browser", () => {
   test("without WebGPU it says so and downloads nothing", async ({ page }) => {
     await webgpu(page, false);
@@ -18,28 +26,63 @@ test.describe("model in the browser", () => {
       if (/huggingface\.co|hf\.co/.test(r.url())) hub.push(r.url());
     });
     await page.goto("/page.html?local=1");
-    const widget = page.locator("murmur-chat");
-    await widget.locator(".launcher").click();
-    await widget.getByRole("textbox").fill("Horaires ?");
-    await widget.getByRole("textbox").press("Enter");
+    const widget = await ask(page, "Horaires ?");
     await expect(widget.locator(".consent")).toContainText("pas de WebGPU");
     await expect(widget.getByRole("button", { name: "Télécharger et répondre" })).toHaveCount(0);
     expect(hub).toEqual([]);
   });
 
-  test("asks before downloading, then explains a failed load", async ({ page }) => {
+  test("by default the first question starts the download, with no prompt", async ({ page }) => {
+    await webgpu(page, true);
+    const hub: string[] = [];
+    await page.route(/huggingface\.co|hf\.co|cdn\.jsdelivr\.net/, (r) => {
+      hub.push(r.request().url());
+      return r.abort();
+    });
+    await page.goto("/page.html?local=1");
+    await page.waitForTimeout(500);
+    expect(hub).toEqual([]); // nothing before the question
+    const widget = await ask(page, "Horaires ?");
+    await expect(widget.locator(".consent")).toHaveCount(0);
+    await expect(widget.getByRole("alert")).toBeVisible({ timeout: 20000 });
+    expect(hub.length).toBeGreaterThan(0);
+    await expect(widget.getByRole("button", { name: "Réessayer" })).toBeVisible();
+  });
+
+  test("preload=consent asks before downloading", async ({ page }) => {
     await webgpu(page, true);
     await page.route(/huggingface\.co|hf\.co|cdn\.jsdelivr\.net/, (r) => r.abort());
-    await page.goto("/page.html?local=1");
-    const widget = page.locator("murmur-chat");
-    await widget.locator(".launcher").click();
-    await widget.getByRole("textbox").fill("Horaires ?");
-    await widget.getByRole("textbox").press("Enter");
+    await page.goto("/page.html?local=1&preload=consent");
+    const widget = await ask(page, "Horaires ?");
     await expect(widget.locator(".consent")).toContainText("LFM3 1.7B");
     await expect(widget.locator(".consent")).toContainText("1,1 Go");
     await widget.getByRole("button", { name: "Télécharger et répondre" }).click();
     await expect(widget.getByRole("alert")).toBeVisible({ timeout: 20000 });
-    await expect(widget.getByRole("button", { name: "Réessayer" })).toBeVisible();
+  });
+
+  test("preload=open starts the download when the bubble opens", async ({ page }) => {
+    await webgpu(page, true);
+    const hub: string[] = [];
+    await page.route(/huggingface\.co|hf\.co|cdn\.jsdelivr\.net/, (r) => {
+      hub.push(r.request().url());
+      return r.abort();
+    });
+    await page.goto("/page.html?local=1&preload=open");
+    await page.waitForTimeout(500);
+    expect(hub).toEqual([]);
+    await page.locator("murmur-chat .launcher").click();
+    await expect.poll(() => hub.length, { timeout: 15000 }).toBeGreaterThan(0);
+  });
+
+  test("data-mode=local shows no key settings", async ({ page }) => {
+    await webgpu(page, false);
+    await page.goto("/page.html?local=1");
+    const widget = await ask(page, "Horaires ?");
+    await expect(widget.getByRole("button", { name: "Réglages IA" })).toBeHidden();
+    await expect(widget.locator(".consent")).toContainText("ne peut pas le faire tourner");
+    await expect(
+      widget.getByRole("button", { name: "Utiliser une clé API à la place" }),
+    ).toHaveCount(0);
   });
 
   test("the AI settings offer both, the browser model disabled without WebGPU", async ({
@@ -56,14 +99,16 @@ test.describe("model in the browser", () => {
     await expect(widget.locator(".local-choice")).toContainText("no WebGPU");
   });
 
-  test("the configurator: browser model by default, data-local=false for keys only", async ({
-    page,
-  }) => {
+  test("the configurator writes the mode and the preload", async ({ page }) => {
     await page.goto("/murmur/#wire");
     const snippet = page.locator("#wire-snippet");
-    await expect(snippet).not.toContainText("data-local");
-    await page.getByRole("radio", { name: /Visitors' key only/ }).check({ force: true });
-    await expect(snippet).toContainText('data-local="false"');
+    await page.getByRole("radio", { name: /In the browser/ }).check({ force: true });
+    await expect(snippet).toContainText('data-mode="local"');
+    await page.getByRole("combobox", { name: "Download" }).selectOption("open");
+    await expect(snippet).toContainText('data-preload="open"');
+    await page.getByRole("radio", { name: /Visitors' key/ }).check({ force: true });
+    await expect(snippet).toContainText('data-mode="key"');
+    await expect(snippet).not.toContainText("data-preload");
   });
 
   test("data-local=false offers only the visitor's key", async ({ page }) => {

@@ -32,6 +32,20 @@ export interface WidgetOptions {
   /** Open the panel on load. */
   open?: boolean;
   /**
+   * How the widget answers. `auto` (default): the owner's proxy or key if set, else the model in
+   * the visitor's browser with their own key as an option. `proxy`: only `llm.endpoint`. `local`:
+   * only the in-browser model, no key settings. `key`: only a key, the owner's `llm.apiKey` or
+   * else each visitor's own.
+   */
+  mode?: WidgetMode;
+  /**
+   * When the in-browser model downloads (about 1.1 GB, once; then it loads from the browser's
+   * cache): `question` (default) on the first question, `open` when the panel opens, `idle` as
+   * soon as the page is idle, `consent` after the visitor agrees on a prompt. A model already in
+   * the cache is prepared in the background whatever this says, without network.
+   */
+  preload?: Preload;
+  /**
    * The model that runs in the visitor's browser on WebGPU, the default way to answer when there
    * is no proxy: LFM3 1.7B, about 1.1 GB downloaded once after the visitor agrees. Visitors can
    * still connect their own key in the AI settings. Pass your own spec to run another model, or
@@ -46,7 +60,16 @@ export interface ChatTurn extends Turn {
   error?: string;
 }
 
-type Mode = "custom" | "local" | "proxy" | "visitor";
+export type WidgetMode = "auto" | "proxy" | "local" | "key";
+export type Preload = "question" | "open" | "idle" | "consent";
+
+/** Where the in-browser model is: not started, downloading or compiling, ready, or failed. */
+export interface LocalState {
+  status: "idle" | "loading" | "ready" | "error";
+  progress?: LoadProgress;
+}
+
+type Mode = "custom" | "local" | "owner" | "proxy" | "visitor";
 
 /** Passages are cut down for a model running in the page: a long prompt is slow to read there. */
 const LOCAL_SEARCH = { limit: 4, budgetTokens: 1500 };
@@ -58,8 +81,8 @@ export class ChatSession {
   private storePromise: Promise<LlmSettingsStore> | null = null;
   private readonly historyKey: string;
   private readonly key: string;
-  /** Called while the in-browser model downloads. */
-  onProgress: ((progress: LoadProgress) => void) | null = null;
+  private local: LocalState = { status: "idle" };
+  private readonly localListeners = new Set<(state: LocalState) => void>();
 
   constructor(readonly options: WidgetOptions) {
     this.key = options.storageKey ?? "murmur";
@@ -72,20 +95,82 @@ export class ChatSession {
     }
   }
 
+  private get configured(): WidgetMode {
+    return this.options.mode ?? "auto";
+  }
+
   /**
-   * How this session answers: your own model, then the owner's proxy, then the visitor's own
-   * key if they chose one, else the model in the browser.
+   * How this session answers: your own model; then the owner's proxy, then the owner's key;
+   * then the visitor's own key if they chose one; else the model in the browser.
    */
   get mode(): Mode {
+    const m = this.configured;
     if (this.options.model) return "custom";
-    if (this.options.llm?.endpoint) return "proxy";
-    if (!this.localAllowed) return "visitor";
+    if (m === "proxy" || (m === "auto" && this.options.llm?.endpoint)) return "proxy";
+    if ((m === "auto" || m === "key") && this.options.llm?.apiKey) return "owner";
+    if (m === "local") return "local";
+    if (m === "key" || !this.localAllowed) return "visitor";
     return readLocal(`${this.key}-local`) === "0" ? "visitor" : "local";
   }
 
-  /** Whether the in-browser model is offered: not with your own model or a proxy, nor `local: false`. */
+  /** Whether the in-browser model is offered at all. */
   get localAllowed(): boolean {
-    return !this.options.model && !this.options.llm?.endpoint && this.options.local !== false;
+    const m = this.configured;
+    if (this.options.model || m === "proxy" || m === "key") return false;
+    if (m === "local") return true;
+    return !this.options.llm?.endpoint && !this.options.llm?.apiKey && this.options.local !== false;
+  }
+
+  /** Whether visitors may connect their own key (the AI settings). */
+  get keyAllowed(): boolean {
+    const m = this.configured;
+    if (this.options.model || m === "proxy" || m === "local") return false;
+    return !this.options.llm?.endpoint && !this.options.llm?.apiKey;
+  }
+
+  /** Where the in-browser model is, and a way to follow it. */
+  get localState(): LocalState {
+    return this.local;
+  }
+
+  onLocalState(listener: (state: LocalState) => void): () => void {
+    this.localListeners.add(listener);
+    return () => this.localListeners.delete(listener);
+  }
+
+  private setLocal(state: LocalState): void {
+    this.local = state;
+    for (const listener of this.localListeners) listener(state);
+  }
+
+  /**
+   * Starts loading the in-browser model now, in the background: downloads it if needed, then
+   * compiles it. Does nothing outside the local mode or without WebGPU. Safe to call often.
+   */
+  async warmUp(): Promise<void> {
+    if (this.mode !== "local" || this.local.status !== "idle") return;
+    if (!(await this.canRunLocally())) return;
+    const { loadLocalModel } = await import("../local/index");
+    this.setLocal({ status: "loading" });
+    try {
+      await loadLocalModel(await this.localSpec(), (progress) =>
+        this.setLocal({ status: "loading", progress }),
+      );
+      this.setLocal({ status: "ready" });
+    } catch {
+      this.setLocal({ status: "error" });
+    }
+  }
+
+  /** A model already in the browser's cache is prepared right away: no network, no prompt. */
+  async warmUpIfCached(): Promise<void> {
+    if (this.mode !== "local" || this.preload === "consent") return;
+    const { isLocalModelCached } = await import("../local/index");
+    if (await isLocalModelCached(await this.localSpec())) await this.warmUp();
+  }
+
+  get preload(): Preload {
+    return this.options.preload ?? "question";
   }
 
   /**
@@ -93,7 +178,7 @@ export class ChatSession {
    * and never chose between the two, keeps their key.
    */
   async settleChoice(): Promise<void> {
-    if (!this.localAllowed || readLocal(`${this.key}-local`) !== null) return;
+    if (!this.localAllowed || !this.keyAllowed || readLocal(`${this.key}-local`) !== null) return;
     const [{ isConfigured }, store] = await Promise.all([import("../llm/index"), this.store()]);
     const saved = await store.load();
     if (saved && isConfigured(saved)) writeLocal(`${this.key}-local`, "0");
@@ -112,9 +197,14 @@ export class ChatSession {
     this.engine = null;
   }
 
-  /** Whether the visitor must still agree to download the in-browser model. */
+  /** Whether the visitor must still agree to download the in-browser model (`preload: "consent"`). */
   get needsDownloadConsent(): boolean {
-    return this.mode === "local" && readLocal(`${this.key}-local-consent`) !== "1";
+    return (
+      this.mode === "local" &&
+      this.preload === "consent" &&
+      this.local.status !== "ready" &&
+      readLocal(`${this.key}-local-consent`) !== "1"
+    );
   }
 
   agreeToDownload(): void {
@@ -147,12 +237,13 @@ export class ChatSession {
 
   /** The settings to call, or null when the visitor has to set up a model first. */
   async settings(): Promise<LlmSettings | null> {
-    if (this.mode === "custom") return null;
+    const mode = this.mode;
+    if (mode === "custom" || mode === "local") return null;
     const llm = await import("../llm/index");
-    return llm.resolveSettings(
-      this.options.llm ?? {},
-      this.mode === "visitor" ? await this.store() : null,
-    );
+    const config = this.options.llm ?? {};
+    if (mode === "proxy") return llm.proxySettings(config);
+    if (mode === "owner") return llm.ownerKeySettings(config, this.options.catalogUrl);
+    return llm.resolveSettings({ ...config, endpoint: "" }, await this.store());
   }
 
   async needsSetup(): Promise<boolean> {
@@ -194,7 +285,7 @@ export class ChatSession {
               const { localModel } = await import("../local/index");
               return localModel({
                 spec: await this.localSpec(),
-                onProgress: (p) => this.onProgress?.(p),
+                onProgress: (progress) => this.setLocal({ status: "loading", progress }),
               });
             }
           : async () => {
@@ -229,6 +320,8 @@ export class ChatSession {
     // Saved now too: a reload or a click on a source mid-answer keeps the question.
     this.persist();
     try {
+      // Shows the load bar from the start, and shares the load with any preload under way.
+      if (this.mode === "local") void this.warmUp();
       this.engine ??= this.createEngine();
       const engine = await this.engine.catch((error: unknown) => {
         this.engine = null;
@@ -246,6 +339,7 @@ export class ChatSession {
         onText(turn.content, turn);
       }
       const done = await answer.done;
+      if (this.mode === "local") this.setLocal({ status: "ready" });
       turn.content = done.text;
       turn.cited = done.cited;
     } catch (error) {

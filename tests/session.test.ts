@@ -55,15 +55,12 @@ describe("ChatSession", () => {
     expect(new ChatSession({}).mode).toBe("local");
   });
 
-  test("preferences without a key keep the browser model, and consent is asked once", async () => {
+  test("preferences without a key keep the browser model", async () => {
     localStorage.setItem("murmur-llm", JSON.stringify({ providerId: "openai", model: "gpt-x" }));
     const session = new ChatSession({});
     expect(session.mode).toBe("local");
     await session.settleChoice();
     expect(session.mode).toBe("local");
-    expect(session.needsDownloadConsent).toBe(true);
-    session.agreeToDownload();
-    expect(session.needsDownloadConsent).toBe(false);
   });
 
   test("answers, keeps the sources and persists the conversation for the tab", async () => {

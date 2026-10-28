@@ -12,6 +12,7 @@ export function optionsFromDataset(data: DOMStringMap, base: string): WidgetOpti
   if (data.provider) llm.provider = data.provider;
   if (data.model) llm.model = data.model;
   if (data.endpoint) llm.endpoint = data.endpoint;
+  if (data.apiKey) llm.apiKey = data.apiKey;
   if (Object.keys(llm).length) o.llm = llm;
   if (data.instructions) o.instructions = data.instructions;
   if (data.lang) o.lang = data.lang;
@@ -30,6 +31,15 @@ export function optionsFromDataset(data: DOMStringMap, base: string): WidgetOpti
   if (data.storageKey) o.storageKey = data.storageKey;
   if (data.open === "true") o.open = true;
   if (data.local === "false") o.local = false;
+  if (data.mode === "auto" || data.mode === "proxy" || data.mode === "local" || data.mode === "key")
+    o.mode = data.mode;
+  if (
+    data.preload === "question" ||
+    data.preload === "open" ||
+    data.preload === "idle" ||
+    data.preload === "consent"
+  )
+    o.preload = data.preload;
   return o;
 }
 

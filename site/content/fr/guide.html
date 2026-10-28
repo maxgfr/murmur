@@ -14,6 +14,9 @@
           <tbody>
             <tr><td><code>data-index</code></td><td>URL du fichier d'index écrit par <code>murmur index</code>, par exemple <code>/murmur-index.json</code>. Sans lui, le widget lit la page courante.</td></tr>
             <tr><td><code>data-endpoint</code></td><td>URL de votre proxy compatible OpenAI (https). Les visiteurs discutent alors sans clé.</td></tr>
+            <tr><td><code>data-mode</code></td><td><code>proxy</code>, <code>local</code>, <code>auto</code> (par défaut) ou <code>key</code> : qui répond (voir <a href="#modeles-et-cles">Modèles d'IA et clés</a>).</td></tr>
+            <tr><td><code>data-preload</code></td><td>Quand le modèle du navigateur se télécharge : <code>question</code> (par défaut), <code>open</code>, <code>idle</code> ou <code>consent</code>.</td></tr>
+            <tr><td><code>data-api-key</code></td><td>Votre propre clé, utilisée pour chaque visiteur. Publique : seulement une clé plafonnée.</td></tr>
             <tr><td><code>data-local</code></td><td><code>false</code> désactive le modèle qui tourne dans le navigateur du visiteur, utilisé par défaut quand il n'y a pas de proxy : le visiteur a alors besoin de sa propre clé.</td></tr>
             <tr><td><code>data-provider</code></td><td>Fournisseur présélectionné pour les visiteurs qui apportent leur clé : <code>openai</code>, <code>anthropic</code>, <code>google</code>, <code>mistral</code>, <code>openrouter</code>, <code>groq</code>…</td></tr>
             <tr><td><code>data-model</code></td><td>Identifiant du modèle : celui présélectionné pour les visiteurs, ou celui demandé à votre proxy.</td></tr>
@@ -47,19 +50,41 @@
         <p>Ajoutez une étape après votre build, avant l'envoi de l'artefact Pages :</p>
         <pre tabindex="0"><code>- run: npx murmur-rag index ./_site --base /mon-depot/ --out ./_site/murmur-index.json</code></pre>
 
-        <h2 id="modeles-et-cles">Modèles d'IA et clés</h2>
-        <p>Une clé écrite dans une page web est lisible par tout le monde : murmur ne vous demande donc jamais d'en mettre une. Sans option, la bulle répond avec un modèle dans le navigateur du visiteur et lui permet de brancher sa propre clé à la place ; un proxy que vous déployez passe avant les deux. Dans l'ordre : votre proxy, sinon la clé du visiteur s'il en a branché une, sinon le modèle du navigateur.</p>
-        <h3 id="dans-le-navigateur">Un modèle dans le navigateur du visiteur</h3>
-        <p>C'est le réglage par défaut : personne n'a besoin de clé, le navigateur fait tourner <a href="https://huggingface.co/LiquidAI/LFM3-1.7B">LFM3 1.7B</a> de Liquid AI (octobre 2026), dans ses poids 4 bits pour WebGPU, via Transformers.js. Avant la première réponse, le widget demande l'accord pour télécharger environ 1,1 Go ; les poids restent ensuite dans le cache du navigateur, et les questions ne quittent jamais l'appareil.</p>
-        <p>Il faut WebGPU (Chrome, Edge ou Safari récents) et un GPU avec environ 1,5 Go de mémoire libre. Sur un portable récent, le premier téléchargement prend une à deux minutes, un rechargement depuis le cache quelques secondes, et une réponse quelques secondes. Un modèle de 1,7 milliard de paramètres est moins précis qu'un modèle hébergé : le visiteur qui veut de meilleures réponses peut brancher sa propre clé dans les réglages IA, et <code>data-local="false"</code> désactive le modèle du navigateur.</p>
-        <h3 id="votre-proxy">Votre proxy garde la clé</h3>
+                <h2 id="modeles-et-cles">Modèles d'IA et clés</h2>
+        <p>Choisissez comment la bulle répond avec <code>data-mode</code>. Une clé écrite dans une page web est lisible par tout le monde : les deux premiers modes la gardent hors de la page.</p>
+        <table>
+          <thead><tr><th><code>data-mode</code></th><th>Qui répond</th></tr></thead>
+          <tbody>
+            <tr><td><code>proxy</code></td><td>Votre Worker, qui garde votre clé. Implicite avec <code>data-endpoint</code>. Ce qu'utilisent la plupart des sites.</td></tr>
+            <tr><td><code>local</code></td><td>Un modèle dans le navigateur du visiteur, et rien d'autre : pas de réglages de clé.</td></tr>
+            <tr><td><code>auto</code> (par défaut)</td><td>Votre proxy ou votre clé s'ils sont définis ; sinon le modèle du navigateur, le visiteur restant libre de brancher sa propre clé.</td></tr>
+            <tr><td><code>key</code></td><td>Une clé seulement : la vôtre (<code>data-api-key</code>), sinon celle de chaque visiteur.</td></tr>
+          </tbody>
+        </table>
+        <h3 id="votre-proxy">Votre Worker garde la clé</h3>
         <p>Déployez le <a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">Worker Cloudflare d'exemple</a>. Il garde votre clé en secret, transmet les requêtes de chat à n'importe quelle API compatible OpenAI (OpenRouter, OpenAI, Groq, Mistral…), n'accepte que l'origine de votre site, fixe le modèle et plafonne la longueur de chaque réponse. Ensuite :</p>
         <pre tabindex="0"><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
   data-endpoint="https://murmur-proxy.vous.workers.dev/v1" data-model="openai/gpt-5-mini"&gt;&lt;/script&gt;</code></pre>
         <p>Fixez une limite de dépenses chez votre fournisseur : quiconque peut ouvrir votre site peut utiliser votre proxy.</p>
+        <h3 id="dans-le-navigateur">Un modèle dans le navigateur du visiteur</h3>
+        <p>Avec <code>data-mode="local"</code> (ou par défaut quand il n'y a pas de proxy), le navigateur fait tourner <a href="https://huggingface.co/LiquidAI/LFM3-1.7B">LFM3 1.7B</a> de Liquid AI (octobre 2026), dans ses poids 4 bits pour WebGPU, via Transformers.js. Les questions ne quittent jamais l'appareil.</p>
+        <p><code>data-preload</code> indique quand les poids (environ 1,1 Go) se téléchargent :</p>
+        <table>
+          <thead><tr><th><code>data-preload</code></th><th>Le téléchargement démarre</th></tr></thead>
+          <tbody>
+            <tr><td><code>question</code> (par défaut)</td><td>À la première question, avec une barre de progression discrète au-dessus du champ.</td></tr>
+            <tr><td><code>open</code></td><td>Quand le visiteur ouvre la bulle : le modèle est souvent prêt quand il a fini de taper.</td></tr>
+            <tr><td><code>idle</code></td><td>Dès que la page est inactive, même si le visiteur n'ouvre jamais la bulle.</td></tr>
+            <tr><td><code>consent</code></td><td>Après l'accord du visiteur, sur une demande qui nomme le modèle et sa taille.</td></tr>
+          </tbody>
+        </table>
+        <p>Les poids restent dans le cache du navigateur, et murmur demande au navigateur de les conserver (stockage persistant) pour qu'un téléchargement d'1 Go ne soit pas effacé. À la visite suivante, un modèle déjà en cache est préparé en arrière-plan, sans réseau, quel que soit <code>data-preload</code> : la première réponse arrive alors en quelques secondes.</p>
+        <p>Il faut WebGPU (Chrome, Edge ou Safari récents) et un GPU avec environ 1,5 Go de mémoire libre ; sinon, la bulle le dit. Un modèle de 1,7 milliard de paramètres est moins précis qu'un modèle hébergé.</p>
         <h3 id="cle-du-visiteur">Chaque visiteur apporte sa clé</h3>
-        <p>Dans les réglages IA (les curseurs de l'en-tête, ou le lien sous la demande de téléchargement), le visiteur choisit un fournisseur et un modèle, colle une clé, la teste et enregistre ; cette clé remplace alors le modèle du navigateur, et les mêmes réglages permettent d'y revenir. <a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">llm-connect</a> chiffre la clé en AES-GCM sous une clé que la page ne peut pas exporter, la garde dans le navigateur (pour la session, ou sur l'appareil si le visiteur le demande) et ne l'envoie qu'au fournisseur choisi. Le visiteur peut aussi brancher le widget sur Ollama ou LM Studio sur sa propre machine.</p>
+        <p>Avec <code>data-mode="key"</code>, ou depuis les réglages IA dans le mode par défaut, le visiteur choisit un fournisseur et un modèle, colle une clé, la teste et enregistre. <a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">llm-connect</a> chiffre la clé en AES-GCM sous une clé que la page ne peut pas exporter, la garde dans le navigateur (pour la session, ou sur l'appareil si le visiteur le demande) et ne l'envoie qu'au fournisseur choisi. Le visiteur peut aussi brancher le widget sur Ollama ou LM Studio sur sa propre machine.</p>
         <p>Le navigateur appelle directement le fournisseur, qui doit donc accepter les appels depuis une page web (CORS) : c'est le cas d'OpenAI, Anthropic, Google, Mistral, OpenRouter, Groq, Together, DeepInfra, xAI et des serveurs locaux avec CORS activé.</p>
+        <h3 id="cle-du-proprietaire">Votre clé dans la page</h3>
+        <p><code>data-api-key</code> avec <code>data-provider</code> (et <code>data-model</code>, sinon le modèle recommandé du fournisseur) répond à chaque visiteur avec votre clé. Elle est dans votre HTML : n'importe qui peut la lire et l'utiliser ailleurs. N'utilisez qu'une clé plafonnée (une clé OpenRouter avec une limite de crédit, une clé de projet restreinte), et préférez un Worker.</p>
 
         <h2 id="paquet-npm">Paquet npm</h2>
         <pre tabindex="0"><code>npm install murmur-rag</code></pre>

@@ -21,7 +21,8 @@
       const s = document.createElement("script");
       s.type = "module";
       s.src = "/murmur/cdn/murmur.js";
-      if (params.get("local")) Object.assign(s.dataset, { local: "true", storageKey: "host-local" });
+      if (params.get("local"))
+        Object.assign(s.dataset, { mode: "local", preload: params.get("preload") || "question", storageKey: `host-local-${params.get("preload") || "question"}` });
       else Object.assign(s.dataset, { endpoint: "http://localhost:4317/mock/v1", model, storageKey: `host-${model}` });
       document.body.append(s);
     </script>

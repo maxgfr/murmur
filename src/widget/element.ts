@@ -3,7 +3,13 @@ import { cleanAnswer, passageHref } from "../rag/ground";
 import { type Messages, messagesFor, pickLanguage } from "./i18n";
 import { icon } from "./icons";
 import { renderMarkdown } from "./markdown";
-import { ChatSession, type ChatTurn, SetupNeeded, type WidgetOptions } from "./session";
+import {
+  ChatSession,
+  type ChatTurn,
+  type LocalState,
+  SetupNeeded,
+  type WidgetOptions,
+} from "./session";
 import { STYLES } from "./styles";
 
 /** What `murmur:state` events carry, for pages that want to show what the widget is doing. */
@@ -58,6 +64,8 @@ export class MurmurChat extends Base {
   private controller: AbortController | null = null;
   private built = false;
   private unsubscribe: (() => void) | null = null;
+  private unsubscribeLocal: (() => void) | null = null;
+  private loadbar!: HTMLElement;
 
   constructor() {
     super();
@@ -81,6 +89,8 @@ export class MurmurChat extends Base {
   disconnectedCallback(): void {
     this.controller?.abort();
     this.unsubscribe?.();
+    this.unsubscribeLocal?.();
+    this.unsubscribeLocal?.();
   }
 
   /** Opens the panel and focuses the question field. */
@@ -88,6 +98,7 @@ export class MurmurChat extends Base {
     if (!this.built) this.build();
     this.launcher.setAttribute("aria-expanded", "true");
     this.panel.hidden = false;
+    if (this.session?.preload === "open") void this.session.warmUp();
     this.session?.persist();
     tabStorage("set", this.openKey);
     this.input.focus();
@@ -194,6 +205,9 @@ export class MurmurChat extends Base {
       else void this.submit();
     });
     form.append(this.input, this.sendBtn);
+    // Where the in-browser model's download shows, discreetly, whenever it happens.
+    this.loadbar = el(doc, "div", { class: "loadbar", role: "status" });
+    this.loadbar.hidden = true;
 
     const footer = el(doc, "footer");
     const by = el(doc, "a", {
@@ -203,7 +217,7 @@ export class MurmurChat extends Base {
     });
     by.textContent = this.t.poweredBy;
     footer.append(by);
-    this.chatView.append(this.log, form, footer);
+    this.chatView.append(this.log, this.loadbar, form, footer);
 
     this.setupView = el(doc, "div", { class: "setup" });
     this.setupView.hidden = true;
@@ -214,10 +228,39 @@ export class MurmurChat extends Base {
     this.built = true;
 
     // The engine, the index and the model load on the first question.
-    this.session = new ChatSession({ ...o, lang });
+    const session = new ChatSession({ ...o, lang });
+    this.session = session;
+    this.settingsBtn.hidden = !session.keyAllowed;
+    this.unsubscribeLocal = session.onLocalState((state) => this.drawLocal(state));
+    whenIdle(() => {
+      if (session.preload === "idle") void session.warmUp();
+      else void session.warmUpIfCached();
+    });
     this.renderChat();
     if (o.open || (!this.hasAttribute("inline") && tabStorage("get", this.openKey)))
       void this.open();
+  }
+
+  /** The download bar and the bubble's lamp follow the in-browser model. */
+  private drawLocal(state: LocalState): void {
+    const doc = this.ownerDocument;
+    const lamp = this.launcher.querySelector(".lamp");
+    lamp?.classList.toggle("busy", state.status === "loading");
+    if (state.status !== "loading") {
+      this.loadbar.hidden = true;
+      return;
+    }
+    const p = state.progress;
+    const label = !p
+      ? this.t.localLoading
+      : p.progress >= 1
+        ? this.t.localPreparing
+        : `${this.t.localLoading} ${Math.round(p.progress * 100)} % · ${Math.round(p.loaded / 1e6).toLocaleString(this.uiLang)} / ${size(p.total / 1e6, this.uiLang, this.t)}`;
+    const bar = el(doc, "progress", { max: "1" });
+    if (p && p.progress < 1) bar.setAttribute("value", String(p.progress));
+    bar.setAttribute("aria-label", this.t.localLoadingLabel);
+    this.loadbar.replaceChildren(text(doc, "span", label), bar);
+    this.loadbar.hidden = false;
   }
 
   private autosize(): void {
@@ -335,7 +378,10 @@ export class MurmurChat extends Base {
     const question = this.input.value.trim();
     if (!question || this.controller || !this.session) return;
     await this.session.settleChoice();
-    if (this.session.needsDownloadConsent) {
+    if (
+      this.session.needsDownloadConsent ||
+      (this.session.mode === "local" && !(await this.session.canRunLocally()))
+    ) {
       await this.showConsent(question);
       return;
     }
@@ -357,22 +403,6 @@ export class MurmurChat extends Base {
     this.log.append(node);
     this.log.scrollTop = this.log.scrollHeight;
     this.log.setAttribute("aria-busy", "true");
-
-    // While the in-browser model downloads, the status line shows how far it got.
-    this.session.onProgress = (p) => {
-      if (!status.isConnected) return;
-      const bar = el(doc, "progress", { max: "1", value: String(p.progress) });
-      bar.setAttribute("aria-label", this.t.localLoadingLabel);
-      const label =
-        p.progress >= 1
-          ? this.t.localPreparing
-          : `${this.t.localLoading} ${Math.round(p.progress * 100)} % · ${Math.round(p.loaded / 1e6).toLocaleString(this.uiLang)} / ${size(p.total / 1e6, this.uiLang, this.t)}`;
-      status.replaceChildren(
-        el(doc, "span", { class: "lamp busy", "aria-hidden": "true" }),
-        el(doc, "span", { class: "grow" }),
-      );
-      status.lastElementChild?.append(doc.createTextNode(label), bar);
-    };
 
     const controller = new AbortController();
     this.controller = controller;
@@ -428,11 +458,13 @@ export class MurmurChat extends Base {
       void this.showSetup(question);
     };
     if (!(await session.canRunLocally())) {
-      card.append(text(doc, "p", t.localNoWebGPU));
-      const key = el(doc, "button", { class: "primary", type: "button" });
-      key.textContent = t.useKey;
-      key.addEventListener("click", useKey);
-      row.append(key);
+      card.append(text(doc, "p", session.keyAllowed ? t.localNoWebGPU : t.localNoWebGPUOnly));
+      if (session.keyAllowed) {
+        const key = el(doc, "button", { class: "primary", type: "button" });
+        key.textContent = t.useKey;
+        key.addEventListener("click", useKey);
+        row.append(key);
+      }
     } else {
       card.append(
         text(
@@ -452,10 +484,12 @@ export class MurmurChat extends Base {
         void this.submit();
       });
       row.append(go);
-      const key = el(doc, "button", { class: "link-btn", type: "button" });
-      key.textContent = t.useKey;
-      key.addEventListener("click", useKey);
-      row.append(key);
+      if (session.keyAllowed) {
+        const key = el(doc, "button", { class: "link-btn", type: "button" });
+        key.textContent = t.useKey;
+        key.addEventListener("click", useKey);
+        row.append(key);
+      }
     }
     card.append(row);
     this.log.append(card);
@@ -713,6 +747,15 @@ function tabStorage(op: "get" | "set" | "remove", key: string): boolean {
     else return sessionStorage.getItem(key) !== null;
   } catch {}
   return false;
+}
+
+/** Runs work when the page has nothing better to do (or soon, where idle callbacks are missing). */
+function whenIdle(work: () => void): void {
+  const idle = (
+    globalThis as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }
+  ).requestIdleCallback;
+  if (idle) idle(work, { timeout: 4000 });
+  else setTimeout(work, 1500);
 }
 
 function el(doc: Document, tag: string, attrs: Record<string, string> = {}): HTMLElement {

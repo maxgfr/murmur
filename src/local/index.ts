@@ -80,14 +80,56 @@ type Generator = ((messages: unknown, options: Record<string, unknown>) => Promi
   tokenizer: unknown;
 };
 const loaded = new Map<string, Promise<Generator>>();
+const ready = new Set<string>();
 const listeners = new Map<string, Set<(p: LoadProgress) => void>>();
+const keyOf = (spec: LocalModelSpec) => `${spec.id}@${spec.dtype}`;
+
+/** Transformers.js keeps downloaded files in this Cache Storage, keyed by their URL. */
+const CACHE_NAME = "transformers-cache";
+
+/**
+ * Whether the model's weights are already in this browser's cache, so loading it needs no
+ * network: the weights file for this dtype is looked up among the cached URLs.
+ */
+export async function isLocalModelCached(
+  spec: LocalModelSpec = DEFAULT_LOCAL_MODEL,
+): Promise<boolean> {
+  try {
+    if (typeof caches === "undefined" || !(await caches.has(CACHE_NAME))) return false;
+    const cache = await caches.open(CACHE_NAME);
+    const weights = `/${spec.id}/resolve/`;
+    const file = `model_${spec.dtype}.onnx`;
+    return (await cache.keys()).some((r) => r.url.includes(weights) && r.url.includes(file));
+  } catch {
+    return false;
+  }
+}
+
+/** Whether the model is loaded and compiled in this page. */
+export function isLocalModelReady(spec: LocalModelSpec = DEFAULT_LOCAL_MODEL): boolean {
+  return ready.has(keyOf(spec));
+}
+
+/**
+ * Asks the browser to keep this site's storage under pressure, so 1 GB of weights is not
+ * evicted and downloaded again. Browsers decide on their own (engagement, installed app…).
+ */
+export async function persistStorage(): Promise<boolean> {
+  try {
+    const storage = globalThis.navigator?.storage;
+    if (!storage?.persist) return false;
+    return (await storage.persisted?.()) || (await storage.persist());
+  } catch {
+    return false;
+  }
+}
 
 /** Downloads (or reads from cache) and compiles the model; later calls share the same load. */
 export function loadLocalModel(
   spec: LocalModelSpec = DEFAULT_LOCAL_MODEL,
   onProgress?: (progress: LoadProgress) => void,
 ): Promise<Generator> {
-  const key = `${spec.id}@${spec.dtype}`;
+  const key = keyOf(spec);
   const set = listeners.get(key) ?? new Set();
   listeners.set(key, set);
   if (onProgress) set.add(onProgress);
@@ -95,6 +137,7 @@ export function loadLocalModel(
   if (!pending) {
     pending = (async () => {
       if (!(await hasWebGPU())) throw new LocalModelError("webgpu", "This browser has no WebGPU.");
+      if (!(await isLocalModelCached(spec))) void persistStorage();
       const { pipeline } = await import("@huggingface/transformers");
       const generator = await pipeline("text-generation", spec.id, {
         dtype: spec.dtype as "q4f16",
@@ -113,7 +156,10 @@ export function loadLocalModel(
           };
           for (const listener of set) listener(p);
         },
+      }).catch((error: unknown) => {
+        throw new LocalModelError("load", error instanceof Error ? error.message : String(error));
       });
+      ready.add(key);
       return generator as unknown as Generator;
     })();
     pending.catch(() => loaded.delete(key));
