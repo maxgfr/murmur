@@ -58,7 +58,7 @@
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
   "bin": {
-    "murmur": "./dist/cli.js"
+    "murmur": "dist/cli.js"
   },
   "files": [
     "dist/lib",
