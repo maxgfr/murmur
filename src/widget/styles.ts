@@ -124,6 +124,7 @@ header .icon-btn:focus-visible { outline-color: var(--accent-ink); }
 .bot { align-self: stretch; }
 .greeting { color: var(--muted); }
 
+.nowrap { white-space: nowrap; }
 .cite {
   display: inline-grid; place-items: center; min-width: 1.45em; height: 1.45em; padding: 0 0.3em;
   margin: 0 0.1em; vertical-align: 0.12em;

@@ -44,7 +44,15 @@ function inline(doc: Document, text: string, cite: CitationRenderer, out: Node):
       } else out.appendChild(doc.createTextNode(label));
     } else {
       const node = cite(Number(token.slice(1, -1)));
-      out.appendChild(node ?? doc.createTextNode(token));
+      // Punctuation right after a citation stays on its line, never alone on the next one.
+      const tail = node ? /^[.,;:!?)»]+/.exec(text.slice(last))?.[0] : undefined;
+      if (node && tail) {
+        const keep = doc.createElement("span");
+        keep.className = "nowrap";
+        keep.append(node, doc.createTextNode(tail));
+        out.appendChild(keep);
+        last += tail.length;
+      } else out.appendChild(node ?? doc.createTextNode(token));
     }
   }
   if (last < text.length) out.appendChild(doc.createTextNode(text.slice(last)));

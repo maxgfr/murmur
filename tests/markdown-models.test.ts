@@ -23,6 +23,12 @@ describe("renderMarkdown, what models actually write", () => {
       '<div tabindex="0" class="table"><table><tr><th>Plan</th><th>Price</th></tr><tr><td><strong>Pro</strong></td><td>12 € <a class="cite">1</a></td></tr><tr><td>Team</td><td>30 €</td></tr></table></div>',
     );
   });
+  test("punctuation after a citation is kept on its line", () => {
+    renderMarkdown(target, "End to end [1]. Then [2], and [3]", cite);
+    expect(html()).toBe(
+      '<p>End to end <span class="nowrap"><a class="cite">1</a>.</span> Then <span class="nowrap"><a class="cite">2</a>,</span> and <a class="cite">3</a></p>',
+    );
+  });
   test("blockquotes and rules", () => {
     renderMarkdown(target, "> quoted **text**\n> more\n\n---\nafter", cite);
     expect(html()).toBe(
@@ -40,7 +46,7 @@ describe("renderMarkdown, what models actually write", () => {
       cite,
     );
     expect(html()).toBe(
-      '<ol><li><strong>Install</strong> it:<pre tabindex="0"><code>npx murmur-rag index ./dist</code></pre> (or in CI <a class="cite">2</a>).</li><li>Add the tag.</li></ol>',
+      '<ol><li><strong>Install</strong> it:<pre tabindex="0"><code>npx murmur-rag index ./dist</code></pre> (or in CI <span class="nowrap"><a class="cite">2</a>).</span></li><li>Add the tag.</li></ol>',
     );
   });
   test("two trailing spaces break the line, in paragraphs and list items", () => {

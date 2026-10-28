@@ -21,7 +21,7 @@ describe("renderMarkdown", () => {
     );
     const html = (target as unknown as { innerHTML: string }).innerHTML;
     expect(html).toBe(
-      '<p>Hello <strong>bold</strong> and <em>it</em> <code>x</code> <a class="cite">1</a>.</p><ul><li>one <a class="cite">2</a></li><li>two</li></ul><ol><li>a</li><li>b</li></ol>',
+      '<p>Hello <strong>bold</strong> and <em>it</em> <code>x</code> <span class="nowrap"><a class="cite">1</a>.</span></p><ul><li>one <a class="cite">2</a></li><li>two</li></ul><ol><li>a</li><li>b</li></ol>',
     );
   });
   test("never turns model text into markup", () => {
