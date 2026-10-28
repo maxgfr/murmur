@@ -37,10 +37,33 @@ function model(text: string) {
 beforeEach(() => installBrowserGlobals());
 
 describe("ChatSession", () => {
-  test("picks the mode from the options", () => {
+  test("answers in the browser by default; your model, then a proxy, come first", () => {
     expect(new ChatSession({ model: model("x") }).mode).toBe("custom");
     expect(new ChatSession({ llm: { endpoint: "https://p.test/v1" } }).mode).toBe("proxy");
-    expect(new ChatSession({ llm: { provider: "openai" } }).mode).toBe("visitor");
+    expect(new ChatSession({ llm: { provider: "openai" } }).mode).toBe("local");
+    expect(new ChatSession({}).mode).toBe("local");
+    expect(new ChatSession({ local: false }).mode).toBe("visitor");
+    expect(new ChatSession({ llm: { endpoint: "https://p.test/v1" } }).localAllowed).toBe(false);
+  });
+
+  test("the visitor can switch to their own key and back", () => {
+    const session = new ChatSession({});
+    session.useLocal(false);
+    expect(session.mode).toBe("visitor");
+    expect(new ChatSession({}).mode).toBe("visitor");
+    session.useLocal(true);
+    expect(new ChatSession({}).mode).toBe("local");
+  });
+
+  test("preferences without a key keep the browser model, and consent is asked once", async () => {
+    localStorage.setItem("murmur-llm", JSON.stringify({ providerId: "openai", model: "gpt-x" }));
+    const session = new ChatSession({});
+    expect(session.mode).toBe("local");
+    await session.settleChoice();
+    expect(session.mode).toBe("local");
+    expect(session.needsDownloadConsent).toBe(true);
+    session.agreeToDownload();
+    expect(session.needsDownloadConsent).toBe(false);
   });
 
   test("answers, keeps the sources and persists the conversation for the tab", async () => {
@@ -88,8 +111,8 @@ describe("ChatSession", () => {
     expect(turn.content).toBe("");
   });
 
-  test("a visitor without saved settings must set up a model first", async () => {
-    const session = new ChatSession({ index, llm: { provider: "openai" } });
+  test("with the in-browser model turned off, a visitor without a key must set one up first", async () => {
+    const session = new ChatSession({ index, llm: { provider: "openai" }, local: false });
     expect(await session.needsSetup()).toBe(true);
     await expect(
       session.ask("plan", () => {}, new AbortController().signal),

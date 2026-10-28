@@ -157,7 +157,7 @@ export class MurmurChat extends Base {
       this.input.focus();
     });
     this.settingsBtn = iconButton(doc, "settings", this.t.settings);
-    this.settingsBtn.hidden = !!o.model || !!o.llm?.endpoint || !!o.local;
+    this.settingsBtn.hidden = !!o.model || !!o.llm?.endpoint;
     this.settingsBtn.addEventListener("click", () => void this.showSetup());
     const closeBtn = iconButton(doc, "close", this.t.close);
     closeBtn.hidden = this.hasAttribute("inline");
@@ -334,6 +334,7 @@ export class MurmurChat extends Base {
   private async submit(): Promise<void> {
     const question = this.input.value.trim();
     if (!question || this.controller || !this.session) return;
+    await this.session.settleChoice();
     if (this.session.needsDownloadConsent) {
       await this.showConsent(question);
       return;
@@ -421,7 +422,6 @@ export class MurmurChat extends Base {
     const spec = await session.localSpec();
     const card = el(doc, "div", { class: "msg bot consent" });
     const row = el(doc, "div", { class: "row" });
-    const ownerLocal = !!this.options.local;
     const useKey = () => {
       card.remove();
       session.useLocal(false);
@@ -429,12 +429,10 @@ export class MurmurChat extends Base {
     };
     if (!(await session.canRunLocally())) {
       card.append(text(doc, "p", t.localNoWebGPU));
-      if (!ownerLocal) {
-        const key = el(doc, "button", { class: "text-btn", type: "button" });
-        key.textContent = t.useKey;
-        key.addEventListener("click", useKey);
-        row.append(key);
-      }
+      const key = el(doc, "button", { class: "primary", type: "button" });
+      key.textContent = t.useKey;
+      key.addEventListener("click", useKey);
+      row.append(key);
     } else {
       card.append(
         text(
@@ -454,12 +452,10 @@ export class MurmurChat extends Base {
         void this.submit();
       });
       row.append(go);
-      if (!ownerLocal) {
-        const key = el(doc, "button", { class: "link-btn", type: "button" });
-        key.textContent = t.useKey;
-        key.addEventListener("click", useKey);
-        row.append(key);
-      }
+      const key = el(doc, "button", { class: "link-btn", type: "button" });
+      key.textContent = t.useKey;
+      key.addEventListener("click", useKey);
+      row.append(key);
     }
     card.append(row);
     this.log.append(card);
@@ -508,24 +504,29 @@ export class MurmurChat extends Base {
         void this.submit();
       }
     });
-    void session.canRunLocally().then((ok) => {
-      localBtn.disabled = !ok;
-      if (!ok) localHint.textContent = t.localNoWebGPU;
+    // The block says which of the two is in use: the browser model (the default) or a key.
+    const switchToKey = el(doc, "button", { class: "link-btn", type: "button" });
+    switchToKey.textContent = t.useKey;
+    switchToKey.addEventListener("click", () => {
+      session.useLocal(false);
+      localBtn.textContent = t.localOption;
+      localBtn.disabled = false;
+      switchToKey.remove();
     });
     if (session.mode === "local") {
       localBtn.textContent = t.localActive;
       localBtn.disabled = true;
-      const back = el(doc, "button", { class: "link-btn", type: "button" });
-      back.textContent = t.useKey;
-      back.addEventListener("click", () => {
-        session.useLocal(false);
-        localBtn.textContent = t.localOption;
-        localBtn.disabled = false;
-        back.remove();
-      });
-      inBrowser.append(back);
+      inBrowser.append(switchToKey);
     }
+    void session.canRunLocally().then((ok) => {
+      if (ok) return;
+      localBtn.textContent = t.localOption;
+      localBtn.disabled = true;
+      localHint.textContent = t.localNoWebGPU;
+      switchToKey.remove();
+    });
     const or = text(doc, "p", t.orKey, "or");
+    inBrowser.hidden = or.hidden = !session.localAllowed;
 
     const local = checkbox(doc, t.local);
     const providerField = field(doc, t.provider, el(doc, "select") as HTMLSelectElement);

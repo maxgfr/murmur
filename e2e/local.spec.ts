@@ -42,20 +42,39 @@ test.describe("model in the browser", () => {
     await expect(widget.getByRole("button", { name: "Réessayer" })).toBeVisible();
   });
 
-  test("visitors find it in the AI settings, disabled without WebGPU", async ({ page }) => {
+  test("the AI settings offer both, the browser model disabled without WebGPU", async ({
+    page,
+  }) => {
     await webgpu(page, false);
     await page.route(/models\.dev|openrouter\.ai/, (r) => r.abort());
     await page.goto("/murmur/");
     const widget = page.locator("#handset murmur-chat");
-    await page.getByRole("button", { name: "How do I add it to my site?" }).click();
+    await widget.getByRole("button", { name: "AI settings" }).click();
+    await expect(widget.getByLabel("API key")).toBeAttached();
     const option = widget.getByRole("button", { name: "Run a model in this browser" });
     await expect(option).toBeDisabled();
     await expect(widget.locator(".local-choice")).toContainText("no WebGPU");
   });
 
-  test("the configurator writes data-local", async ({ page }) => {
+  test("the configurator: browser model by default, data-local=false for keys only", async ({
+    page,
+  }) => {
     await page.goto("/murmur/#wire");
-    await page.getByRole("radio", { name: /In the visitor's browser/ }).check({ force: true });
-    await expect(page.locator("#wire-snippet")).toContainText('data-local="true"');
+    const snippet = page.locator("#wire-snippet");
+    await expect(snippet).not.toContainText("data-local");
+    await page.getByRole("radio", { name: /Visitors' key only/ }).check({ force: true });
+    await expect(snippet).toContainText('data-local="false"');
+  });
+
+  test("data-local=false offers only the visitor's key", async ({ page }) => {
+    await webgpu(page, true);
+    await page.route(/models\.dev|openrouter\.ai/, (r) => r.abort());
+    await page.goto("/key-only.html");
+    const widget = page.locator("murmur-chat");
+    await widget.locator(".launcher").click();
+    await widget.getByRole("textbox").fill("Hours?");
+    await widget.getByRole("textbox").press("Enter");
+    await expect(widget.getByText("Connect an AI model")).toBeVisible();
+    await expect(widget.locator(".local-choice")).toBeHidden();
   });
 });

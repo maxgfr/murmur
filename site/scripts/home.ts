@@ -77,15 +77,18 @@ function config(): { attrs: [string, string][]; options: WidgetOptions } {
   const add = (key: string, v: string) => v && attrs.push([key, v]);
   add("data-index", value("index"));
   if (value("index")) options.index = value("index");
-  if (mode === "local") {
-    add("data-local", "true");
-    options.local = true;
-  } else if (mode === "proxy") {
+  if (mode === "proxy") {
     add("data-endpoint", value("endpoint"));
     add("data-model", value("proxyModel"));
     if (value("endpoint")) llm.endpoint = value("endpoint");
     if (value("proxyModel")) llm.model = value("proxyModel");
   } else {
+    // The in-browser model is the default; "key" turns it off. Either way the provider and
+    // model are what visitors find preselected when they connect their own key.
+    if (mode === "key") {
+      add("data-local", "false");
+      options.local = false;
+    }
     add("data-provider", value("provider"));
     add("data-model", value("model"));
     if (value("provider")) llm.provider = value("provider");
@@ -112,7 +115,7 @@ function config(): { attrs: [string, string][]; options: WidgetOptions } {
 function update() {
   const mode = value("mode");
   for (const el of form.querySelectorAll<HTMLElement>("[data-when]"))
-    el.hidden = el.dataset.when !== mode;
+    el.hidden = !(el.dataset.when ?? "").split(" ").includes(mode);
   const provider = catalog[value("provider")];
   const modelInput = form.elements.namedItem("model") as HTMLInputElement;
   modelInput.placeholder = provider?.defaultModel ?? t("wire.modelPlaceholder");

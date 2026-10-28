@@ -80,12 +80,12 @@
               <fieldset>
                 <legend class="sr">{{wire.mode}}</legend>
                 <div class="toggle">
-                  <label><input type="radio" name="mode" value="visitor" checked /><span>{{wire.modeVisitor}}<small>{{wire.modeVisitorHint}}</small></span></label>
+                  <label><input type="radio" name="mode" value="local" checked /><span>{{wire.modeLocal}}<small>{{wire.modeLocalHint}}</small></span></label>
                   <label><input type="radio" name="mode" value="proxy" /><span>{{wire.modeProxy}}<small>{{wire.modeProxyHint}}</small></span></label>
-                  <label><input type="radio" name="mode" value="local" /><span>{{wire.modeLocal}}<small>{{wire.modeLocalHint}}</small></span></label>
+                  <label><input type="radio" name="mode" value="key" /><span>{{wire.modeVisitor}}<small>{{wire.modeVisitorHint}}</small></span></label>
                 </div>
               </fieldset>
-              <div class="pair" data-when="visitor">
+              <div class="pair" data-when="local key">
                 <label><span>{{wire.provider}}</span><select name="provider"><option value="">{{wire.providerAny}}</option></select></label>
                 <label><span>{{wire.model}}</span><input type="text" name="model" list="models" autocomplete="off" placeholder="{{wire.modelPlaceholder}}" /><datalist id="models"></datalist></label>
               </div>
@@ -94,7 +94,7 @@
                 <label><span>{{wire.proxyModel}}</span><input type="text" name="proxyModel" autocomplete="off" placeholder="openai/gpt-5-mini" /></label>
               </div>
               <p class="hint" data-when="proxy" hidden>{{wire.proxyHint}}</p>
-              <p class="hint" data-when="local" hidden>{{wire.localHint}}</p>
+              <p class="hint" data-when="local">{{wire.localHint}}</p>
               <p class="strip">{{wire.groupContent}}</p>
               <label><span>{{wire.index}}</span><input type="text" name="index" placeholder="/murmur-index.json" /><small>{{wire.indexHint}}</small></label>
               <div class="pair">
@@ -151,13 +151,13 @@
             <article class="mode">
               <h3><span class="lamp on" aria-hidden="true"></span>{{keys.localTitle}}</h3>
               <p>{{keys.localText}}</p>
-              <pre tabindex="0"><code>data-local="true"</code></pre>
+              <pre tabindex="0"><code>&lt;script type="module" src="…/murmur.js"&gt;</code></pre>
               <p><a href="https://huggingface.co/LiquidAI/LFM3-1.7B">LFM3-1.7B</a></p>
             </article>
             <article class="mode">
               <h3><span class="lamp" aria-hidden="true"></span>{{keys.visitorTitle}}</h3>
               <p>{{keys.visitorText}}</p>
-              <pre tabindex="0"><code>data-provider="openrouter" data-model="…"</code></pre>
+              <pre tabindex="0"><code>data-provider="openrouter" data-local="false"</code></pre>
               <p><a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">{{keys.visitorLink}}</a></p>
             </article>
           </div>
