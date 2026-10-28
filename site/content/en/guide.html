@@ -3,7 +3,7 @@
 
         <h2 id="quick-start">Quick start</h2>
         <p>Paste this line before <code>&lt;/body&gt;</code> on every page of your site:</p>
-        <pre><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"&gt;&lt;/script&gt;</code></pre>
+        <pre tabindex="0"><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"&gt;&lt;/script&gt;</code></pre>
         <p>A bubble appears in the bottom right corner. Without any option, it answers from the text of the page the visitor is reading, and each visitor uses their own AI key. To answer from the whole site, build an index (see <a href="#index-your-site">Index your site</a>); to spare visitors the key, use a proxy (see <a href="#ai-models-and-keys">AI models and keys</a>).</p>
         <p>The <a href="./#wire">configurator on the home page</a> writes the line for you.</p>
 
@@ -29,7 +29,7 @@
 
         <h2 id="index-your-site">Index your site</h2>
         <p>The index is a JSON file of your pages cut into passages under their headings. Build it from your site's output folder, after your static site generator:</p>
-        <pre><code>npx murmur-rag index ./dist --out ./dist/murmur-index.json</code></pre>
+        <pre tabindex="0"><code>npx murmur-rag index ./dist --out ./dist/murmur-index.json</code></pre>
         <p>It reads every <code>.html</code>, <code>.md</code> and <code>.txt</code> file. In HTML it keeps the content of <code>main</code> (or <code>article</code>, or <code>body</code>) and skips navigation, headers, footers, forms and scripts. Add <code>data-murmur-ignore</code> to any element you want left out.</p>
         <table>
           <thead><tr><th>Option</th><th>What it does</th></tr></thead>
@@ -44,13 +44,13 @@
         <p>The command also takes a live site: <code>npx murmur-rag index https://example.com/sitemap.xml</code> fetches every page of the sitemap.</p>
         <h3 id="in-a-github-action">In a GitHub Action</h3>
         <p>Add one step after your build, before uploading the Pages artifact:</p>
-        <pre><code>- run: npx murmur-rag index ./_site --base /my-repo/ --out ./_site/murmur-index.json</code></pre>
+        <pre tabindex="0"><code>- run: npx murmur-rag index ./_site --base /my-repo/ --out ./_site/murmur-index.json</code></pre>
 
         <h2 id="ai-models-and-keys">AI models and keys</h2>
         <p>A key written in a web page can be read by anyone, so murmur never asks you to put one there. Pick one of two ways.</p>
         <h3 id="your-proxy">Your proxy holds the key</h3>
         <p>Deploy the <a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">example Cloudflare Worker</a>. It keeps your key as a secret, forwards chat requests to any OpenAI-compatible API (OpenRouter, OpenAI, Groq, Mistral…), accepts only your site's origin, fixes the model and caps the length of each answer. Then:</p>
-        <pre><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
+        <pre tabindex="0"><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
   data-endpoint="https://murmur-proxy.you.workers.dev/v1" data-model="openai/gpt-5-mini"&gt;&lt;/script&gt;</code></pre>
         <p>Set a spending limit at your provider: anyone who can open your site can use your proxy.</p>
         <h3 id="visitor-key">Each visitor brings their key</h3>
@@ -58,7 +58,7 @@
         <p>The browser calls the provider directly, so the provider must accept calls from web pages (CORS): OpenAI, Anthropic, Google, Mistral, OpenRouter, Groq, Together, DeepInfra, xAI and local servers with CORS enabled do.</p>
 
         <h2 id="npm-package">npm package</h2>
-        <pre><code>npm install murmur-rag</code></pre>
+        <pre tabindex="0"><code>npm install murmur-rag</code></pre>
         <p>The package is split so you can take only what you need:</p>
         <table>
           <thead><tr><th>Import</th><th>Contents</th></tr></thead>
@@ -72,7 +72,7 @@
           </tbody>
         </table>
         <h3 id="headless">Headless</h3>
-        <pre><code>import { createMurmur } from "murmur-rag";
+        <pre tabindex="0"><code>import { createMurmur } from "murmur-rag";
 import { anthropic } from "@ai-sdk/anthropic";
 
 const murmur = createMurmur({ index, model: anthropic("claude-sonnet-5-5"), language: "en" });
@@ -81,7 +81,7 @@ for await (const part of answer.textStream) process.stdout.write(part);
 const { cited } = await answer.done; // numbers of the passages it cites</code></pre>
         <h3 id="your-own-retriever">Your own retriever</h3>
         <p>Any object with <code>search(query, { limit, budgetTokens })</code> returning passages replaces BM25: an embeddings index, a search API, a database.</p>
-        <pre><code>const retriever = {
+        <pre tabindex="0"><code>const retriever = {
   async search(query) {
     const hits = await mySearch(query);
     return hits.map((h) => ({ doc: 0, url: h.url, title: h.title, heading: "", anchor: "", text: h.text }));
@@ -91,7 +91,7 @@ mountMurmur({ retriever, llm: { endpoint: "https://proxy.example/v1" } });</code
 
         <h2 id="styling-and-events">Styling and events</h2>
         <p>The widget lives in a Shadow DOM, so your CSS cannot break it and its CSS cannot leak into your page. Restyle it through custom properties on <code>murmur-chat</code>:</p>
-        <pre><code>murmur-chat {
+        <pre tabindex="0"><code>murmur-chat {
   --murmur-accent: #0b5cad;
   --murmur-accent-ink: #ffffff;
   --murmur-font: "Inter", sans-serif;
@@ -99,7 +99,7 @@ mountMurmur({ retriever, llm: { endpoint: "https://proxy.example/v1" } });</code
   --murmur-z: 1000;
 }</code></pre>
         <p>It sends a <code>murmur:state</code> event at each step (<code>searching</code>, <code>streaming</code>, <code>done</code>, <code>error</code>) with the passages found and the ones cited: the switchboard on the home page is drawn from it.</p>
-        <pre><code>document.querySelector("murmur-chat").addEventListener("murmur:state", (e) =&gt; {
+        <pre tabindex="0"><code>document.querySelector("murmur-chat").addEventListener("murmur:state", (e) =&gt; {
   console.log(e.detail.state, e.detail.passages, e.detail.cited);
 });</code></pre>
 

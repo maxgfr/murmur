@@ -78,6 +78,7 @@ export function renderMarkdown(target: Element, markdown: string, cite: Citation
       const body: string[] = [];
       for (i++; i < lines.length && !/^\s*```/.test(lines[i] ?? ""); i++) body.push(lines[i] ?? "");
       const pre = doc.createElement("pre");
+      pre.tabIndex = 0; // it may scroll sideways: keyboard users must be able to reach it
       const code = doc.createElement("code");
       code.textContent = body.join("\n");
       pre.appendChild(code);

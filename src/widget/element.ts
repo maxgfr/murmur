@@ -25,7 +25,12 @@ const ERROR_KEYS: Record<string, keyof Messages> = {
  * `element.configure(options)` before or after it is connected; attributes `inline`,
  * `position` and `theme` style it.
  */
-export class MurmurChat extends HTMLElement {
+// Importing the widget on a server (SSR) must not throw: the class only needs HTMLElement once
+// it is defined as a custom element, in a browser.
+const Base: typeof HTMLElement =
+  typeof HTMLElement === "undefined" ? (class {} as unknown as typeof HTMLElement) : HTMLElement;
+
+export class MurmurChat extends Base {
   private options: WidgetOptions = {};
   private session: ChatSession | null = null;
   private t: Messages = messagesFor("en");
@@ -72,7 +77,7 @@ export class MurmurChat extends HTMLElement {
     this.launcher.setAttribute("aria-expanded", "true");
     this.panel.hidden = false;
     this.session?.persist();
-    sessionStorage.setItem(this.openKey, "1");
+    tabStorage("set", this.openKey);
     this.input.focus();
   }
 
@@ -80,7 +85,7 @@ export class MurmurChat extends HTMLElement {
     if (this.hasAttribute("inline")) return;
     this.launcher.setAttribute("aria-expanded", "false");
     this.panel.hidden = true;
-    sessionStorage.removeItem(this.openKey);
+    tabStorage("remove", this.openKey);
     this.launcher.focus();
   }
 
@@ -198,7 +203,7 @@ export class MurmurChat extends HTMLElement {
     // The engine, the index and the model load on the first question.
     this.session = new ChatSession({ ...o, lang });
     this.renderChat();
-    if (o.open || (!this.hasAttribute("inline") && sessionStorage.getItem(this.openKey)))
+    if (o.open || (!this.hasAttribute("inline") && tabStorage("get", this.openKey)))
       void this.open();
   }
 
@@ -563,6 +568,16 @@ function fillModels(doc: Document, select: HTMLSelectElement, s: LlmSettingsStat
     ...s.models.map((m) => option(doc, m.id, m.id === rec ? `${m.name} ★` : m.name)),
   );
   select.value = s.draft.model;
+}
+
+/** sessionStorage, or nothing where the page may not use it (sandboxed frames, blocked storage). */
+function tabStorage(op: "get" | "set" | "remove", key: string): boolean {
+  try {
+    if (op === "set") sessionStorage.setItem(key, "1");
+    else if (op === "remove") sessionStorage.removeItem(key);
+    else return sessionStorage.getItem(key) !== null;
+  } catch {}
+  return false;
 }
 
 function el(doc: Document, tag: string, attrs: Record<string, string> = {}): HTMLElement {

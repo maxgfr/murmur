@@ -1,6 +1,8 @@
 // Builds the npm library (dist/lib, dist/types, dist/cli.js), the CDN bundle (dist/cdn)
 // and the GitHub Pages site (dist/site). `bun scripts/build.ts [lib|site]` builds one part.
+import { existsSync } from "node:fs";
 import { cp, mkdir, rm } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { $ } from "bun";
 import { DEFAULT_LANG, generate, LANGS } from "./pages";
 
@@ -36,6 +38,30 @@ async function lib() {
   });
   if (!cli.success) throw new AggregateError(cli.logs, "cli build failed");
   await $`bunx tsc -p tsconfig.build.json`;
+  await fullySpecifyTypes("dist/types");
+}
+
+/**
+ * tsc keeps extensionless relative specifiers in .d.ts files, which `moduleResolution: node16`
+ * and `nodenext` consumers cannot follow: write them as `./x.js` or `./x/index.js`.
+ */
+async function fullySpecifyTypes(dir: string) {
+  const files = await Array.fromAsync(new Bun.Glob("**/*.d.ts").scan(dir));
+  for (const rel of files) {
+    const path = `${dir}/${rel}`;
+    const from = dirname(path);
+    const text = await Bun.file(path).text();
+    const out = text.replace(
+      /(from\s+|import\()(["'])(\.{1,2}\/[^"']+)\2/g,
+      (all, lead, q, spec) => {
+        if (/\.(js|mjs|cjs|json)$/.test(spec)) return all;
+        if (existsSync(join(from, `${spec}.d.ts`))) return `${lead}${q}${spec}.js${q}`;
+        if (existsSync(join(from, spec, "index.d.ts"))) return `${lead}${q}${spec}/index.js${q}`;
+        throw new Error(`${path}: cannot resolve ${spec}`);
+      },
+    );
+    if (out !== text) await Bun.write(path, out);
+  }
 }
 
 async function cdn() {

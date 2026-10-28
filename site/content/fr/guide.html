@@ -3,7 +3,7 @@
 
         <h2 id="demarrage-rapide">Démarrage rapide</h2>
         <p>Collez cette ligne avant <code>&lt;/body&gt;</code> sur chaque page de votre site :</p>
-        <pre><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"&gt;&lt;/script&gt;</code></pre>
+        <pre tabindex="0"><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"&gt;&lt;/script&gt;</code></pre>
         <p>Une bulle apparaît en bas à droite. Sans option, elle répond à partir du texte de la page que lit le visiteur, et chaque visiteur utilise sa propre clé d'IA. Pour répondre à partir de tout le site, construisez un index (voir <a href="#indexer-votre-site">Indexer votre site</a>) ; pour épargner la clé aux visiteurs, passez par un proxy (voir <a href="#modeles-et-cles">Modèles d'IA et clés</a>).</p>
         <p>Le <a href="./#wire">configurateur de la page d'accueil</a> écrit la ligne pour vous.</p>
 
@@ -29,7 +29,7 @@
 
         <h2 id="indexer-votre-site">Indexer votre site</h2>
         <p>L'index est un fichier JSON de vos pages découpées en passages sous leurs titres. Construisez-le à partir du dossier de sortie de votre site, après votre générateur de site statique :</p>
-        <pre><code>npx murmur-rag index ./dist --out ./dist/murmur-index.json</code></pre>
+        <pre tabindex="0"><code>npx murmur-rag index ./dist --out ./dist/murmur-index.json</code></pre>
         <p>Il lit tous les fichiers <code>.html</code>, <code>.md</code> et <code>.txt</code>. Dans le HTML, il garde le contenu de <code>main</code> (ou <code>article</code>, ou <code>body</code>) et ignore la navigation, les en-têtes, pieds de page, formulaires et scripts. Ajoutez <code>data-murmur-ignore</code> à tout élément à laisser de côté.</p>
         <table>
           <thead><tr><th>Option</th><th>Effet</th></tr></thead>
@@ -44,13 +44,13 @@
         <p>La commande accepte aussi un site en ligne : <code>npx murmur-rag index https://exemple.fr/sitemap.xml</code> récupère toutes les pages du sitemap.</p>
         <h3 id="dans-une-github-action">Dans une GitHub Action</h3>
         <p>Ajoutez une étape après votre build, avant l'envoi de l'artefact Pages :</p>
-        <pre><code>- run: npx murmur-rag index ./_site --base /mon-depot/ --out ./_site/murmur-index.json</code></pre>
+        <pre tabindex="0"><code>- run: npx murmur-rag index ./_site --base /mon-depot/ --out ./_site/murmur-index.json</code></pre>
 
         <h2 id="modeles-et-cles">Modèles d'IA et clés</h2>
         <p>Une clé écrite dans une page web est lisible par tout le monde : murmur ne vous demande donc jamais d'en mettre une. Choisissez l'une des deux façons.</p>
         <h3 id="votre-proxy">Votre proxy garde la clé</h3>
         <p>Déployez le <a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">Worker Cloudflare d'exemple</a>. Il garde votre clé en secret, transmet les requêtes de chat à n'importe quelle API compatible OpenAI (OpenRouter, OpenAI, Groq, Mistral…), n'accepte que l'origine de votre site, fixe le modèle et plafonne la longueur de chaque réponse. Ensuite :</p>
-        <pre><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
+        <pre tabindex="0"><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
   data-endpoint="https://murmur-proxy.vous.workers.dev/v1" data-model="openai/gpt-5-mini"&gt;&lt;/script&gt;</code></pre>
         <p>Fixez une limite de dépenses chez votre fournisseur : quiconque peut ouvrir votre site peut utiliser votre proxy.</p>
         <h3 id="cle-du-visiteur">Chaque visiteur apporte sa clé</h3>
@@ -58,7 +58,7 @@
         <p>Le navigateur appelle directement le fournisseur, qui doit donc accepter les appels depuis une page web (CORS) : c'est le cas d'OpenAI, Anthropic, Google, Mistral, OpenRouter, Groq, Together, DeepInfra, xAI et des serveurs locaux avec CORS activé.</p>
 
         <h2 id="paquet-npm">Paquet npm</h2>
-        <pre><code>npm install murmur-rag</code></pre>
+        <pre tabindex="0"><code>npm install murmur-rag</code></pre>
         <p>Le paquet est découpé pour ne prendre que ce dont vous avez besoin :</p>
         <table>
           <thead><tr><th>Import</th><th>Contenu</th></tr></thead>
@@ -72,7 +72,7 @@
           </tbody>
         </table>
         <h3 id="sans-interface">Sans interface</h3>
-        <pre><code>import { createMurmur } from "murmur-rag";
+        <pre tabindex="0"><code>import { createMurmur } from "murmur-rag";
 import { anthropic } from "@ai-sdk/anthropic";
 
 const murmur = createMurmur({ index, model: anthropic("claude-sonnet-5-5"), language: "fr" });
@@ -81,7 +81,7 @@ for await (const part of answer.textStream) process.stdout.write(part);
 const { cited } = await answer.done; // numéros des passages cités</code></pre>
         <h3 id="votre-propre-retriever">Votre propre retriever</h3>
         <p>Tout objet doté de <code>search(query, { limit, budgetTokens })</code> qui renvoie des passages remplace BM25 : un index d'embeddings, une API de recherche, une base de données.</p>
-        <pre><code>const retriever = {
+        <pre tabindex="0"><code>const retriever = {
   async search(query) {
     const hits = await maRecherche(query);
     return hits.map((h) => ({ doc: 0, url: h.url, title: h.title, heading: "", anchor: "", text: h.text }));
@@ -91,7 +91,7 @@ mountMurmur({ retriever, llm: { endpoint: "https://proxy.exemple.fr/v1" } });</c
 
         <h2 id="style-et-evenements">Style et événements</h2>
         <p>Le widget vit dans un Shadow DOM : votre CSS ne peut pas le casser et le sien ne déborde pas sur votre page. Changez son style par des propriétés personnalisées sur <code>murmur-chat</code> :</p>
-        <pre><code>murmur-chat {
+        <pre tabindex="0"><code>murmur-chat {
   --murmur-accent: #0b5cad;
   --murmur-accent-ink: #ffffff;
   --murmur-font: "Inter", sans-serif;
@@ -99,7 +99,7 @@ mountMurmur({ retriever, llm: { endpoint: "https://proxy.exemple.fr/v1" } });</c
   --murmur-z: 1000;
 }</code></pre>
         <p>Il émet un événement <code>murmur:state</code> à chaque étape (<code>searching</code>, <code>streaming</code>, <code>done</code>, <code>error</code>) avec les passages trouvés et ceux cités : le standard de la page d'accueil est dessiné à partir de lui.</p>
-        <pre><code>document.querySelector("murmur-chat").addEventListener("murmur:state", (e) =&gt; {
+        <pre tabindex="0"><code>document.querySelector("murmur-chat").addEventListener("murmur:state", (e) =&gt; {
   console.log(e.detail.state, e.detail.passages, e.detail.cited);
 });</code></pre>
 

@@ -149,6 +149,8 @@ export class ChatSession {
     this.turns.push({ role: "user", content: question });
     const turn: ChatTurn = { role: "assistant", content: "" };
     this.turns.push(turn);
+    // Saved now too: a reload or a click on a source mid-answer keeps the question.
+    this.persist();
     try {
       this.engine ??= this.createEngine();
       const engine = await this.engine.catch((error: unknown) => {

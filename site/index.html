@@ -66,7 +66,7 @@
 
       <div class="snippet">
         <span class="label">{{snippet.label}}</span>
-        <pre><code id="hero-snippet">&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"&gt;&lt;/script&gt;</code></pre>
+        <pre tabindex="0"><code id="hero-snippet">&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"&gt;&lt;/script&gt;</code></pre>
         <button class="copy" type="button" data-copy="hero-snippet">{{snippet.copy}}</button>
       </div>
 
@@ -109,7 +109,7 @@
             </form>
             <div class="output">
               <div class="panel">
-                <pre><code id="wire-snippet"></code></pre>
+                <pre tabindex="0"><code id="wire-snippet"></code></pre>
                 <div class="bar">
                   <span class="lamp" id="wire-lamp" aria-hidden="true"></span>
                   <button class="ghost-btn" type="button" id="try">{{wire.try}}</button>
@@ -143,13 +143,13 @@
             <article class="mode dark">
               <h3><span class="lamp on" aria-hidden="true"></span>{{keys.proxyTitle}}</h3>
               <p>{{keys.proxyText}}</p>
-              <pre><code>data-endpoint="https://murmur-proxy.you.workers.dev/v1"</code></pre>
+              <pre tabindex="0"><code>data-endpoint="https://murmur-proxy.you.workers.dev/v1"</code></pre>
               <p><a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">{{keys.proxyLink}}</a></p>
             </article>
             <article class="mode">
               <h3><span class="lamp" aria-hidden="true"></span>{{keys.visitorTitle}}</h3>
               <p>{{keys.visitorText}}</p>
-              <pre><code>data-provider="openrouter" data-model="…"</code></pre>
+              <pre tabindex="0"><code>data-provider="openrouter" data-model="…"</code></pre>
               <p><a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">{{keys.visitorLink}}</a></p>
             </article>
           </div>
@@ -169,7 +169,7 @@
               <div><dt>murmur-rag/widget</dt><dd>{{npm.widget}}</dd></div>
               <div><dt>npx murmur-rag index</dt><dd>{{npm.cli}}</dd></div>
             </dl>
-            <pre class="code"><code><span class="c"># {{npm.c1}}</span>
+            <pre class="code" tabindex="0"><code><span class="c"># {{npm.c1}}</span>
 npm install murmur-rag
 npx murmur-rag index ./dist --out ./dist/murmur-index.json
 
