@@ -1,20 +1,28 @@
-// Packs murmur-rag as npm would publish it, installs the tarball in a scratch project and
-// checks what a consumer gets: the CLI, Node imports of every server-safe entry point, and
-// the types under both `nodenext` and `bundler` resolution.
+// Packs murmur-rag as npm would publish it (or, with --published, takes the version on the
+// registry), installs it in a scratch project and checks what a consumer gets: the CLI, Node
+// imports of every server-safe entry point, and the types under `nodenext` and `bundler`.
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { $ } from "bun";
 
+const published = process.argv.includes("--published");
 const root = resolve(import.meta.dir, "..");
 const dir = await mkdtemp(join(tmpdir(), "murmur-package-"));
 try {
-  const tarball = (await $`npm pack --silent --pack-destination ${dir}`.cwd(root).text()).trim();
+  const source = published
+    ? "murmur-rag@latest"
+    : join(dir, (await $`npm pack --silent --pack-destination ${dir}`.cwd(root).text()).trim());
   await Bun.write(
     join(dir, "package.json"),
     JSON.stringify({ name: "consumer", private: true, type: "module" }),
   );
-  await $`npm install --silent --no-audit --no-fund ${join(dir, tarball)} typescript@7`.cwd(dir);
+  await $`npm install --silent --no-audit --no-fund ${source} typescript@7`.cwd(dir);
+  if (published) {
+    const version = (await $`npm ls murmur-rag --json`.cwd(dir).json()).dependencies["murmur-rag"]
+      .version;
+    console.log(`checking murmur-rag@${version} from the registry`);
+  }
 
   await Bun.write(
     join(dir, "site/index.html"),

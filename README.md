@@ -105,6 +105,8 @@ bun run dev        # build, then serve on http://localhost:4317/murmur/
 bun run test       # unit tests
 bun run test:e2e   # Playwright against a fake OpenAI-compatible endpoint, axe WCAG 2.2 AA scans
 bun run test:package  # packs, installs and checks the CLI, Node imports and types
+bun run test:live     # the deployed site and its published script (also in CI after each deploy, daily)
+bun run test:package:published  # the same package checks on the version published on npm
 bun run typecheck && bun run lint
 ```
 
