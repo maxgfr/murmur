@@ -1195,6 +1195,138 @@ html {
   margin: 0 auto;
 }
 
+/* The author's entry, as a page of the telephone directory. */
+.directory {
+  display: grid;
+  gap: calc(var(--u) * 2.5);
+  max-width: 880px;
+  margin: 0 0 calc(var(--u) * 5);
+}
+.entry {
+  display: flex;
+  align-items: baseline;
+  gap: var(--u);
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  line-height: 1.15;
+}
+.entry .who {
+  white-space: nowrap;
+}
+.entry .who b {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.entry .leader {
+  flex: 1;
+  min-width: calc(var(--u) * 4);
+  border-bottom: 2px dotted var(--ivory-line);
+  transform: translateY(-0.3em);
+}
+.entry .what {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.author-text {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 17px;
+  text-wrap: pretty;
+}
+.author-more {
+  display: grid;
+  gap: calc(var(--u) * 1.5);
+  margin-bottom: calc(var(--u) * 2);
+}
+.career {
+  display: grid;
+  gap: calc(var(--u) * 1.25);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.career li {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: calc(var(--u) * 2);
+  align-items: baseline;
+}
+.career b {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.motto {
+  margin: 0;
+  padding: calc(var(--u) * 2) calc(var(--u) * 2.5);
+  border-radius: 6px;
+  background: var(--bakelite);
+  color: var(--bakelite-ink);
+  font-family: var(--display);
+  font-size: 20px;
+  line-height: 1.3;
+}
+.motto p {
+  margin: 0;
+}
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(var(--u) * 2);
+  max-width: 880px;
+  margin: 0 0 calc(var(--u) * 4);
+  padding: 0;
+  list-style: none;
+}
+.numbers li {
+  display: grid;
+  gap: 2px;
+  padding-top: calc(var(--u) * 1.5);
+  border-top: 2px solid var(--bakelite);
+}
+.numbers b {
+  font-family: var(--display);
+  font-size: clamp(2rem, 3.4vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.numbers span {
+  color: var(--muted);
+  font-size: 15px;
+}
+.author-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 3);
+  margin: calc(var(--u) * 2) 0 var(--u);
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+}
+@media (max-width: 640px) {
+  .entry {
+    flex-wrap: wrap;
+  }
+  .entry .leader {
+    display: none;
+  }
+  .entry .what {
+    white-space: normal;
+  }
+  .career li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .numbers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 @media (max-width: 960px) {
   .board,
   .wire,

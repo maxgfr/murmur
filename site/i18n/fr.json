@@ -133,5 +133,22 @@
   "wire.preloadQuestion": "À la première question",
   "wire.preloadOpen": "À l'ouverture de la bulle",
   "wire.preloadIdle": "Dès que la page est inactive",
-  "wire.preloadConsent": "Après accord du visiteur"
+  "wire.preloadConsent": "Après accord du visiteur",
+  "author.title": "Qui a câblé ce standard.",
+  "author.role": "Ingénieur logiciel",
+  "author.ibm": "Il a travaillé chez IBM, où il a commencé comme architecte développeur.",
+  "author.startupName": "Sa propre entreprise",
+  "author.startup": "Il a lancé un réseau social pour les créateurs de contenu.",
+  "author.freelance": "Aujourd'hui avec des entreprises et des startups, de la conception d'un projet à sa mise en production.",
+  "author.motto": "Sa règle, tirée de son site : le logiciel progresse mieux quand il est partagé.",
+  "author.numbersLabel": "Sur GitHub",
+  "author.repos": "dépôts publics à lui",
+  "author.stars": "étoiles sur ces dépôts",
+  "author.followers": "abonnés",
+  "author.since": "sur GitHub depuis janvier",
+  "author.languages": "Surtout du TypeScript (68 dépôts) et du JavaScript (57), puis du Java, du Rust et du Shell. Son dépôt le plus étoilé est csv-ai-analyzer, un analyseur de CSV par IA qui tourne dans le navigateur.",
+  "author.readme": "Son profil GitHub s'ouvre sur une classe TypeScript, ConcreteEngineer, dont la méthode whatIDo() avoue tout : il corrige des bugs, en crée parfois, et continue d'apprendre.",
+  "author.siblings": "Du même auteur, et proches de murmur : ephemeral, des salles en direct et un widget de présence d'une ligne pour les sites statiques ; llm-connect et llm-models, la couche modèle sur laquelle tourne murmur ; hush, une messagerie chiffrée de bout en bout ; et environ deux cents autres.",
+  "author.asOf": "Chiffres tirés de son profil GitHub public, octobre 2026.",
+  "author.made": "murmur est fait par Maxime Golfier, qui l'a conçu et développé. C'est un ingénieur logiciel spécialisé dans l'architecture des systèmes d'information."
 }
