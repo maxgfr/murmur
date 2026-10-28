@@ -17,5 +17,14 @@
     "noEmit": true,
     "types": ["bun"]
   },
-  "include": ["src", "site", "scripts", "e2e", "tests", "playwright.config.ts"]
+  "include": [
+    "e2e",
+    "e2e-live",
+    "playwright.config.ts",
+    "playwright.live.config.ts",
+    "scripts",
+    "site",
+    "src",
+    "tests"
+  ]
 }
