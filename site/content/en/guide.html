@@ -14,6 +14,9 @@
           <tbody>
             <tr><td><code>data-index</code></td><td>URL of the index file written by <code>murmur index</code>, for example <code>/murmur-index.json</code>. Without it, the widget reads the current page.</td></tr>
             <tr><td><code>data-endpoint</code></td><td>URL of your OpenAI-compatible proxy (https). Visitors then chat without a key.</td></tr>
+            <tr><td><code>data-mode</code></td><td><code>proxy</code>, <code>local</code>, <code>auto</code> (default) or <code>key</code>: who answers (see <a href="#ai-models-and-keys">AI models and keys</a>).</td></tr>
+            <tr><td><code>data-preload</code></td><td>When the in-browser model downloads: <code>question</code> (default), <code>open</code>, <code>idle</code> or <code>consent</code>.</td></tr>
+            <tr><td><code>data-api-key</code></td><td>Your own key, used for every visitor. Public: only a key with a spending limit.</td></tr>
             <tr><td><code>data-local</code></td><td><code>false</code> turns off the model that runs in the visitor's browser, which is otherwise the default when there is no proxy: visitors then need their own key.</td></tr>
             <tr><td><code>data-provider</code></td><td>Provider preselected for visitors who bring their own key: <code>openai</code>, <code>anthropic</code>, <code>google</code>, <code>mistral</code>, <code>openrouter</code>, <code>groq</code>…</td></tr>
             <tr><td><code>data-model</code></td><td>Model id: the one preselected for visitors, or the one asked of your proxy.</td></tr>
@@ -47,19 +50,41 @@
         <p>Add one step after your build, before uploading the Pages artifact:</p>
         <pre tabindex="0"><code>- run: npx murmur-rag index ./_site --base /my-repo/ --out ./_site/murmur-index.json</code></pre>
 
-        <h2 id="ai-models-and-keys">AI models and keys</h2>
-        <p>A key written in a web page can be read by anyone, so murmur never asks you to put one there. Without any option, the bubble answers with a model in the visitor's browser and lets visitors connect their own key instead; a proxy you deploy takes precedence over both. In that order: your proxy, else the visitor's key if they connected one, else the model in the browser.</p>
-        <h3 id="in-the-browser">A model in the visitor's browser</h3>
-        <p>This is the default: nobody needs a key, the browser runs <a href="https://huggingface.co/LiquidAI/LFM3-1.7B">LFM3 1.7B</a> by Liquid AI (October 2026), in its 4-bit WebGPU weights, through Transformers.js. Before the first answer the widget asks to download about 1.1 GB; the weights then stay in the browser's cache, and questions never leave the device.</p>
-        <p>It needs WebGPU (recent Chrome, Edge or Safari) and a GPU with about 1.5 GB of memory to spare. On a recent laptop the first download takes a minute or two, a reload from the cache a few seconds, and an answer a few seconds. A 1.7B model is less precise than a hosted one: visitors who want better answers can connect their own key from the AI settings, and <code>data-local="false"</code> turns the in-browser model off.</p>
-        <h3 id="your-proxy">Your proxy holds the key</h3>
+                <h2 id="ai-models-and-keys">AI models and keys</h2>
+        <p>Pick how the bubble answers with <code>data-mode</code>. A key written in a web page can be read by anyone, so the first two keep it out of the page.</p>
+        <table>
+          <thead><tr><th><code>data-mode</code></th><th>Who answers</th></tr></thead>
+          <tbody>
+            <tr><td><code>proxy</code></td><td>Your Worker, holding your key. Implied by <code>data-endpoint</code>. What most sites use.</td></tr>
+            <tr><td><code>local</code></td><td>A model in the visitor's browser, nothing else: no key settings.</td></tr>
+            <tr><td><code>auto</code> (default)</td><td>Your proxy or your key if set; else the browser model, with visitors free to connect their own key.</td></tr>
+            <tr><td><code>key</code></td><td>A key only: yours (<code>data-api-key</code>) or else each visitor's own.</td></tr>
+          </tbody>
+        </table>
+        <h3 id="your-proxy">Your Worker holds the key</h3>
         <p>Deploy the <a href="https://github.com/maxgfr/murmur/tree/main/examples/cloudflare-worker">example Cloudflare Worker</a>. It keeps your key as a secret, forwards chat requests to any OpenAI-compatible API (OpenRouter, OpenAI, Groq, Mistral…), accepts only your site's origin, fixes the model and caps the length of each answer. Then:</p>
         <pre tabindex="0"><code>&lt;script type="module" src="https://maxgfr.github.io/murmur/cdn/murmur.js"
   data-endpoint="https://murmur-proxy.you.workers.dev/v1" data-model="openai/gpt-5-mini"&gt;&lt;/script&gt;</code></pre>
         <p>Set a spending limit at your provider: anyone who can open your site can use your proxy.</p>
+        <h3 id="in-the-browser">A model in the visitor's browser</h3>
+        <p>With <code>data-mode="local"</code> (or by default when there is no proxy), the browser runs <a href="https://huggingface.co/LiquidAI/LFM3-1.7B">LFM3 1.7B</a> by Liquid AI (October 2026), in its 4-bit WebGPU weights, through Transformers.js. Questions never leave the device.</p>
+        <p><code>data-preload</code> says when the weights (about 1.1 GB) download:</p>
+        <table>
+          <thead><tr><th><code>data-preload</code></th><th>Download starts</th></tr></thead>
+          <tbody>
+            <tr><td><code>question</code> (default)</td><td>On the first question, with a discreet progress bar above the question field.</td></tr>
+            <tr><td><code>open</code></td><td>When the visitor opens the bubble, so it is often ready by the time they finish typing.</td></tr>
+            <tr><td><code>idle</code></td><td>As soon as the page is idle, even if the visitor never opens the bubble.</td></tr>
+            <tr><td><code>consent</code></td><td>After the visitor agrees on a prompt that names the model and its size.</td></tr>
+          </tbody>
+        </table>
+        <p>The weights stay in the browser's cache, and murmur asks the browser to keep them (persistent storage) so a 1 GB download is not evicted. On the next visit, a model already in the cache is prepared in the background, without network, whatever <code>data-preload</code> says: the first answer then comes in a few seconds.</p>
+        <p>It needs WebGPU (recent Chrome, Edge or Safari) and a GPU with about 1.5 GB of memory to spare; without it, the bubble says so. A 1.7B model is less precise than a hosted one.</p>
         <h3 id="visitor-key">Each visitor brings their key</h3>
-        <p>In the AI settings (the sliders in the header, or the link under the download prompt), the visitor picks a provider and a model, pastes a key, tests it and saves; that key is then used instead of the in-browser model, and the same settings switch back. <a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">llm-connect</a> encrypts the key with AES-GCM under a key the page cannot export, keeps it in the browser (for the session, or on the device if the visitor asks) and sends it only to the chosen provider. The visitor can also point the widget at Ollama or LM Studio on their own machine.</p>
+        <p>With <code>data-mode="key"</code>, or from the AI settings in the default mode, the visitor picks a provider and a model, pastes a key, tests it and saves. <a href="https://github.com/maxgfr/llm-models/tree/main/packages/llm-connect">llm-connect</a> encrypts the key with AES-GCM under a key the page cannot export, keeps it in the browser (for the session, or on the device if the visitor asks) and sends it only to the chosen provider. The visitor can also point the widget at Ollama or LM Studio on their own machine.</p>
         <p>The browser calls the provider directly, so the provider must accept calls from web pages (CORS): OpenAI, Anthropic, Google, Mistral, OpenRouter, Groq, Together, DeepInfra, xAI and local servers with CORS enabled do.</p>
+        <h3 id="owner-key">Your key in the page</h3>
+        <p><code>data-api-key</code> with <code>data-provider</code> (and <code>data-model</code>, else the provider's recommended one) answers every visitor with your key. It is in your HTML: anyone can read it and use it elsewhere. Only use a key with a spending limit (an OpenRouter key with a credit cap, a restricted project key), and prefer a Worker.</p>
 
         <h2 id="npm-package">npm package</h2>
         <pre tabindex="0"><code>npm install murmur-rag</code></pre>

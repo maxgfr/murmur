@@ -54,7 +54,7 @@ test("the in-browser model comes first, a visitor's key can replace it, then the
 test("configurator writes the snippet", async ({ page }) => {
   await page.goto("/murmur/#wire");
   await page.getByLabel("Title").fill('Ask "Acme"');
-  await page.getByText("My proxy holds it").click();
+  await page.getByRole("radio", { name: /My Worker holds the key/ }).check({ force: true });
   await page.getByLabel("Proxy URL").fill("https://proxy.example/v1");
   const snippet = page.locator("#wire-snippet");
   await expect(snippet).toContainText('data-endpoint="https://proxy.example/v1"');

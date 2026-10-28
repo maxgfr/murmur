@@ -80,21 +80,31 @@
               <fieldset>
                 <legend class="sr">{{wire.mode}}</legend>
                 <div class="toggle">
-                  <label><input type="radio" name="mode" value="local" checked /><span>{{wire.modeLocal}}<small>{{wire.modeLocalHint}}</small></span></label>
-                  <label><input type="radio" name="mode" value="proxy" /><span>{{wire.modeProxy}}<small>{{wire.modeProxyHint}}</small></span></label>
+                  <label><input type="radio" name="mode" value="proxy" checked /><span>{{wire.modeProxy}}<small>{{wire.modeProxyHint}}</small></span></label>
+                  <label><input type="radio" name="mode" value="local" /><span>{{wire.modeLocal}}<small>{{wire.modeLocalHint}}</small></span></label>
+                  <label><input type="radio" name="mode" value="auto" /><span>{{wire.modeAuto}}<small>{{wire.modeAutoHint}}</small></span></label>
                   <label><input type="radio" name="mode" value="key" /><span>{{wire.modeVisitor}}<small>{{wire.modeVisitorHint}}</small></span></label>
+                  <label><input type="radio" name="mode" value="owner" /><span>{{wire.modeOwner}}<small>{{wire.modeOwnerHint}}</small></span></label>
                 </div>
               </fieldset>
-              <div class="pair" data-when="local key">
+              <label data-when="local auto" hidden><span>{{wire.preload}}</span><select name="preload">
+                <option value="question">{{wire.preloadQuestion}}</option>
+                <option value="open">{{wire.preloadOpen}}</option>
+                <option value="idle">{{wire.preloadIdle}}</option>
+                <option value="consent">{{wire.preloadConsent}}</option>
+              </select></label>
+              <label data-when="owner" hidden><span>{{wire.apiKey}}</span><input type="text" name="apiKey" autocomplete="off" spellcheck="false" placeholder="sk-or-…" /></label>
+              <p class="warn" data-when="owner" hidden>{{wire.ownerWarn}}</p>
+              <div class="pair" data-when="auto key owner" hidden>
                 <label><span>{{wire.provider}}</span><select name="provider"><option value="">{{wire.providerAny}}</option></select></label>
                 <label><span>{{wire.model}}</span><input type="text" name="model" list="models" autocomplete="off" placeholder="{{wire.modelPlaceholder}}" /><datalist id="models"></datalist></label>
               </div>
-              <div class="pair" data-when="proxy" hidden>
+              <div class="pair" data-when="proxy">
                 <label><span>{{wire.endpoint}}</span><input type="url" name="endpoint" placeholder="https://murmur-proxy.you.workers.dev/v1" /></label>
                 <label><span>{{wire.proxyModel}}</span><input type="text" name="proxyModel" autocomplete="off" placeholder="openai/gpt-5-mini" /></label>
               </div>
-              <p class="hint" data-when="proxy" hidden>{{wire.proxyHint}}</p>
-              <p class="hint" data-when="local">{{wire.localHint}}</p>
+              <p class="hint" data-when="proxy">{{wire.proxyHint}}</p>
+              <p class="hint" data-when="local auto" hidden>{{wire.localHint}}</p>
               <p class="strip">{{wire.groupContent}}</p>
               <label><span>{{wire.index}}</span><input type="text" name="index" placeholder="/murmur-index.json" /><small>{{wire.indexHint}}</small></label>
               <div class="pair">

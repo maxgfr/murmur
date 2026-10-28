@@ -82,17 +82,29 @@ function config(): { attrs: [string, string][]; options: WidgetOptions } {
     add("data-model", value("proxyModel"));
     if (value("endpoint")) llm.endpoint = value("endpoint");
     if (value("proxyModel")) llm.model = value("proxyModel");
+  } else if (mode === "local") {
+    add("data-mode", "local");
+    options.mode = "local";
   } else {
-    // The in-browser model is the default; "key" turns it off. Either way the provider and
-    // model are what visitors find preselected when they connect their own key.
+    // "auto" is the widget's default: nothing to write. The provider and model are what a
+    // visitor finds preselected, or what the owner's key calls.
     if (mode === "key") {
-      add("data-local", "false");
-      options.local = false;
+      add("data-mode", "key");
+      options.mode = "key";
+    }
+    if (mode === "owner") {
+      add("data-api-key", value("apiKey"));
+      if (value("apiKey")) llm.apiKey = value("apiKey");
     }
     add("data-provider", value("provider"));
     add("data-model", value("model"));
     if (value("provider")) llm.provider = value("provider");
     if (value("model")) llm.model = value("model");
+  }
+  const preload = value("preload");
+  if ((mode === "local" || mode === "auto") && preload && preload !== "question") {
+    add("data-preload", preload);
+    options.preload = preload as NonNullable<WidgetOptions["preload"]>;
   }
   add("data-title", value("title"));
   add("data-greeting", value("greeting"));

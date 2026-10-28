@@ -52,6 +52,7 @@ export interface Messages {
   localPreparing: string;
   localNoWebGPU: string;
   localLoadFailed: string;
+  localNoWebGPUOnly: string;
   gigabytes: string;
   megabytes: string;
 }
@@ -113,6 +114,8 @@ const en: Messages = {
   localNoWebGPU:
     "This browser cannot run the model locally (no WebGPU). Try a recent Chrome, Edge or Safari, or use an API key.",
   localLoadFailed: "The model could not be loaded in this browser.",
+  localNoWebGPUOnly:
+    "This site answers with an AI model that runs in your browser, and this browser cannot run it (no WebGPU). Try a recent Chrome, Edge or Safari.",
   gigabytes: "GB",
   megabytes: "MB",
 };
@@ -175,6 +178,8 @@ const fr: Messages = {
   localNoWebGPU:
     "Ce navigateur ne peut pas faire tourner le modèle en local (pas de WebGPU). Essayez un Chrome, Edge ou Safari récent, ou utilisez une clé API.",
   localLoadFailed: "Le modèle n'a pas pu être chargé dans ce navigateur.",
+  localNoWebGPUOnly:
+    "Ce site répond avec un modèle d'IA qui tourne dans votre navigateur, et ce navigateur ne peut pas le faire tourner (pas de WebGPU). Essayez un Chrome, Edge ou Safari récent.",
   gigabytes: "Go",
   megabytes: "Mo",
 };

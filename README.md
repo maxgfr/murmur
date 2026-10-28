@@ -12,18 +12,20 @@ An AI chat bubble for any website that answers from the site's own pages, cites 
 
 Paste the line before `</body>`. Without options, the bubble answers from the page the visitor is on, with a small model running in the visitor's browser (after they agree to a one-time 1.1 GB download); visitors can connect their own AI key instead from the AI settings. The [configurator](https://maxgfr.github.io/murmur/#wire) writes the line for you.
 
-| Attribute                                                        |                                                                                                              |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `data-index`                                                     | URL of the index written by `murmur index` (`/murmur-index.json`). Without it, the current page is read      |
-| `data-endpoint`                                                  | Your OpenAI-compatible proxy (https): visitors chat without a key                                            |
-| `data-local`                                                     | `false` turns off the in-browser model, the default when there is no proxy: visitors then need their own key |
-| `data-provider`, `data-model`                                    | Provider and model preselected for visitors, or the model asked of the proxy                                 |
-| `data-instructions`                                              | Your instructions to the assistant                                                                           |
-| `data-title`, `data-greeting`, `data-placeholder`, `data-button` | Texts of the panel                                                                                           |
-| `data-lang`                                                      | `en` or `fr` (default: the page's `lang`, then the browser's)                                                |
-| `data-position`                                                  | `bottom-right` (default) or `bottom-left`                                                                    |
-| `data-accent`, `data-theme`                                      | Any CSS colour; `auto`, `light` or `dark`                                                                    |
-| `data-open`, `data-storage-key`                                  | Open on load; prefix of what the widget stores                                                               |
+| Attribute                                                        |                                                                                                                               |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `data-index`                                                     | URL of the index written by `murmur index` (`/murmur-index.json`). Without it, the current page is read                       |
+| `data-endpoint`                                                  | Your OpenAI-compatible proxy (https): visitors chat without a key                                                             |
+| `data-mode`, `data-preload`                                      | Who answers (`proxy`, `local`, `auto`, `key`) and when the in-browser model downloads (`question`, `open`, `idle`, `consent`) |
+| `data-api-key`                                                   | Your own key for every visitor: public, only a key with a spending limit                                                      |
+| `data-local`                                                     | `false` turns off the in-browser model, the default when there is no proxy: visitors then need their own key                  |
+| `data-provider`, `data-model`                                    | Provider and model preselected for visitors, or the model asked of the proxy                                                  |
+| `data-instructions`                                              | Your instructions to the assistant                                                                                            |
+| `data-title`, `data-greeting`, `data-placeholder`, `data-button` | Texts of the panel                                                                                                            |
+| `data-lang`                                                      | `en` or `fr` (default: the page's `lang`, then the browser's)                                                                 |
+| `data-position`                                                  | `bottom-right` (default) or `bottom-left`                                                                                     |
+| `data-accent`, `data-theme`                                      | Any CSS colour; `auto`, `light` or `dark`                                                                                     |
+| `data-open`, `data-storage-key`                                  | Open on load; prefix of what the widget stores                                                                                |
 
 The widget lives in a Shadow DOM and is restyled through `--murmur-accent`, `--murmur-accent-ink`, `--murmur-font`, `--murmur-radius` and `--murmur-z`. It emits `murmur:state` events (`searching`, `streaming`, `done`, `error`) with the passages found and cited.
 
@@ -37,11 +39,18 @@ Reads every `.html`, `.md` and `.txt` file (or a live `sitemap.xml`), keeps the 
 
 ## AI models and keys
 
-A key in a web page is readable by anyone, so murmur never puts one there. The widget uses your proxy if you set one, else the visitor's key if they connected one, else the model in the browser:
+Pick who answers with `data-mode`:
 
-- **Your proxy holds the key.** Deploy [`examples/cloudflare-worker`](examples/cloudflare-worker) (about 40 lines): it keeps the key as a secret, allows only your origin, fixes the model and caps answers. Then `data-endpoint="https://murmur-proxy.you.workers.dev/v1"`.
-- **No key at all, by default.** Without a proxy, the widget runs [LFM3 1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B) (Liquid AI, October 2026) in the visitor's browser on WebGPU through Transformers.js. The widget asks before downloading about 1.1 GB, then the weights stay in the browser's cache and questions never leave the device. Slower and less precise than a hosted model; `data-local="false"` turns it off.
-- **Or each visitor brings theirs.** The AI settings, built on llm-connect's store, let a visitor use their own key instead of the in-browser model: provider and model from the [llm-models](https://github.com/maxgfr/llm-models) catalog, the key encrypted with AES-GCM under a non-extractable browser key and sent only to that provider, or a local Ollama / LM Studio.
+| `data-mode`      |                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------- |
+| `proxy`          | Your Worker holds the key (implied by `data-endpoint`). Most sites                           |
+| `local`          | Only a model in the visitor's browser, no key settings                                       |
+| `auto` (default) | Your proxy or key if set, else the browser model with visitors free to connect their own key |
+| `key`            | A key only: yours (`data-api-key`), else each visitor's own                                  |
+- **Your Worker.** Deploy [`examples/cloudflare-worker`](examples/cloudflare-worker) (about 40 lines): it keeps the key as a secret, allows only your origin, fixes the model and caps answers. Then `data-endpoint="https://murmur-proxy.you.workers.dev/v1"`.
+- **In the browser.** [LFM3 1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B) (Liquid AI, October 2026) runs on WebGPU through Transformers.js; questions never leave the device. `data-preload` sets when its ~1.1 GB downloads: `question` (default, with a discreet progress bar), `open` (bubble opened), `idle` (page idle) or `consent` (after a prompt). The weights stay in the browser's cache with persistent storage requested, and a cached model is prepared in the background on the next visit.
+- **The visitor's key.** The AI settings, built on llm-connect's store: provider and model from the [llm-models](https://github.com/maxgfr/llm-models) catalog, the key encrypted with AES-GCM under a non-extractable browser key and sent only to that provider, or a local Ollama / LM Studio.
+- **Your key in the page.** `data-api-key` with `data-provider` answers everyone with your key. Anyone can read it: only a key with a spending limit.
 
 ## npm package
 

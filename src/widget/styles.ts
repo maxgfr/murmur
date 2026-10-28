@@ -208,7 +208,7 @@ footer a:hover { text-decoration: underline; }
 p.or { margin: 0; color: var(--muted); font-size: 13px; text-align: center; }
 .consent { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: var(--raised); }
 .consent p { margin: 0; }
-.status .grow { display: grid; gap: 6px; flex: 1; }
+.loadbar { display: grid; gap: 6px; margin: 4px 12px 0; padding: 8px 12px; border-radius: 10px; background: var(--raised); color: var(--muted); font-size: 13px; }
 progress { width: 100%; height: 6px; appearance: none; border: 0; border-radius: 3px; background: var(--line); overflow: hidden; }
 progress::-webkit-progress-bar { background: var(--line); }
 progress::-webkit-progress-value { background: var(--lamp); }
