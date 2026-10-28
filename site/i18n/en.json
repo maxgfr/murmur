@@ -133,5 +133,22 @@
   "wire.preloadQuestion": "On the first question",
   "wire.preloadOpen": "When the bubble opens",
   "wire.preloadIdle": "As soon as the page is idle",
-  "wire.preloadConsent": "After asking the visitor"
+  "wire.preloadConsent": "After asking the visitor",
+  "author.title": "Who wired this board.",
+  "author.role": "Software engineer",
+  "author.ibm": "He worked at IBM, where he started as an architect developer.",
+  "author.startupName": "His own company",
+  "author.startup": "He launched a social network for content creators.",
+  "author.freelance": "Now with companies and startups, from the design of a project to production.",
+  "author.motto": "His rule, from his own site: software gets better when it is shared.",
+  "author.numbersLabel": "On GitHub",
+  "author.repos": "public repositories of his own",
+  "author.stars": "stars on them",
+  "author.followers": "followers",
+  "author.since": "on GitHub since January",
+  "author.languages": "Mostly TypeScript (68 repositories) and JavaScript (57), then Java, Rust and Shell. His most starred repository is csv-ai-analyzer, an AI CSV analyser that runs in the browser.",
+  "author.readme": "His GitHub profile opens on a TypeScript class, ConcreteEngineer, whose whatIDo() owns up: he fixes bugs, sometimes causes them, and keeps learning.",
+  "author.siblings": "Also by the author, and close to murmur: ephemeral, live rooms and a one-line presence widget for static sites; llm-connect and llm-models, the model layer murmur runs on; hush, end-to-end encrypted messaging; and about two hundred more.",
+  "author.asOf": "Figures from his public GitHub profile, October 2026.",
+  "author.made": "murmur is made by Maxime Golfier, who designed and built it. He is a software engineer who specialises in information systems architecture."
 }

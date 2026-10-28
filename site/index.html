@@ -213,6 +213,38 @@ mountMurmur({ index: <span class="s">"/murmur-index.json"</span>, llm: { provide
           </ul>
         </div>
       </section>
+      <section class="line" id="author" aria-labelledby="author-title">
+        <div class="wrap">
+          <h2 class="plate" id="author-title">{{author.title}}</h2>
+          <div class="directory">
+            <p class="entry"><span class="who"><b>GOLFIER</b> Maxime</span><span class="leader" aria-hidden="true"></span><span class="what">{{author.role}}</span></p>
+            <p class="author-text">{{author.made}}</p>
+            <ol class="career">
+              <li><b>IBM</b><span>{{author.ibm}}</span></li>
+              <li><b>{{author.startupName}}</b><span>{{author.startup}}</span></li>
+              <li><b>Freelance</b><span>{{author.freelance}}</span></li>
+            </ol>
+            <blockquote class="motto"><p>{{author.motto}}</p></blockquote>
+          </div>
+          <ul class="numbers" aria-label="{{author.numbersLabel}}">
+            <li><b>195</b><span>{{author.repos}}</span></li>
+            <li><b>442</b><span>{{author.stars}}</span></li>
+            <li><b>170</b><span>{{author.followers}}</span></li>
+            <li><b>2017</b><span>{{author.since}}</span></li>
+          </ul>
+          <div class="author-more">
+            <p class="author-text">{{author.languages}}</p>
+            <p class="author-text">{{author.readme}}</p>
+            <p class="author-text">{{author.siblings}}</p>
+          </div>
+          <p class="author-links">
+            <a href="https://maxgfr.github.io">maxgfr.github.io</a>
+            <a href="https://github.com/maxgfr">GitHub</a>
+            <a href="https://www.linkedin.com/in/maxime-golfier">LinkedIn</a>
+          </p>
+          <p class="note">{{author.asOf}}</p>
+        </div>
+      </section>
     </main>
 
     <footer class="foot">
