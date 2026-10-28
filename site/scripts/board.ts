@@ -1,6 +1,7 @@
 import type { MurmurIndex } from "../../src/rag/types";
 import type { MurmurStateDetail } from "../../src/widget/index";
 import { t } from "./common";
+import { designation } from "./designation";
 
 const ROW = 12;
 const SVG = "http://www.w3.org/2000/svg";
@@ -56,7 +57,7 @@ export function switchboard(
         .replace(/\.$/, "");
       const jacks = document.createElement("div");
       jacks.className = "jacks";
-      for (const [n, c] of sections.slice(0, ROW).entries()) {
+      for (const c of sections.slice(0, ROW)) {
         const a = document.createElement("a");
         a.className = "socket";
         a.href = `${doc.url}#${encodeURIComponent(c.anchor)}`;
@@ -70,7 +71,7 @@ export function switchboard(
         jack.setAttribute("aria-hidden", "true");
         const tag = document.createElement("span");
         tag.className = "tag";
-        tag.textContent = String(n + 1).padStart(2, "0");
+        tag.textContent = designation(c.heading);
         a.append(lamp, jack, tag);
         jacks.append(a);
         sockets.set(keyOf(doc.url, c.anchor), { key: keyOf(doc.url, c.anchor), el: a, lamp });

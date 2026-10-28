@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { designation } from "../site/scripts/designation";
 import {
   bm25Retriever,
   buildIndex,
@@ -82,5 +83,13 @@ describe("grounding", () => {
   test("isMurmurIndex", () => {
     expect(isMurmurIndex(index)).toBe(true);
     expect(isMurmurIndex({ docs: [] })).toBe(false);
+  });
+});
+
+describe("site board designations", () => {
+  test("cuts a heading at its first pause, three words at most", () => {
+    expect(designation("Set it up, copy one line.")).toBe("Set it up");
+    expect(designation("Your AI key never goes in your HTML.")).toBe("Your AI key");
+    expect(designation("Options")).toBe("Options");
   });
 });

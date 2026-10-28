@@ -1,5 +1,5 @@
 import { indexPages, type PageInput } from "../../src/indexer/index";
-import { type MurmurChat, mountMurmur } from "../../src/widget/index";
+import { type MurmurChat, type MurmurStateDetail, mountMurmur } from "../../src/widget/index";
 import { lang, rememberLanguageChoice, root, t } from "./common";
 
 rememberLanguageChoice();
@@ -9,6 +9,19 @@ const paste = document.getElementById("paste") as HTMLTextAreaElement;
 const files = document.getElementById("files") as HTMLInputElement;
 const stats = document.getElementById("stats") as HTMLElement;
 const handset = document.getElementById("bench-handset") as HTMLElement;
+const log = document.getElementById("bench-log") as HTMLOListElement;
+
+function logLine(text: string) {
+  const li = document.createElement("li");
+  const time = document.createElement("time");
+  const now = new Date();
+  time.textContent = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const span = document.createElement("span");
+  span.textContent = text;
+  li.append(time, span);
+  log.append(li);
+  while (log.children.length > 3) log.firstElementChild?.remove();
+}
 let widget: MurmurChat | null = null;
 
 const SAMPLE: Record<string, string> = {
@@ -71,6 +84,7 @@ form.addEventListener("submit", async (e) => {
   }
   const index = indexPages(pages);
   stats.textContent = t("play.stats", { docs: index.docs.length, chunks: index.chunks.length });
+  logLine(stats.textContent);
   widget?.remove();
   handset.replaceChildren();
   widget = mountMurmur({
@@ -83,6 +97,19 @@ form.addEventListener("submit", async (e) => {
     messages: { greeting: t("play.greeting") },
   });
   document.getElementById("bench-lamp")?.classList.add("on");
+  widget.addEventListener("murmur:state", (e) => {
+    const d = (e as CustomEvent<MurmurStateDetail>).detail;
+    if (d.state === "searching") logLine(t("field.searching", { n: index.chunks.length }));
+    if (d.state === "done") {
+      const cited = (d.cited ?? [])
+        .map((n) => d.passages?.[n - 1]?.heading || d.passages?.[n - 1]?.title)
+        .filter(Boolean);
+      logLine(
+        cited.length ? t("field.patched", { list: cited.join(" · ") }) : t("field.unanswered"),
+      );
+    }
+    if (d.state === "error") logLine(t("field.error"));
+  });
   widget.shadowRoot?.querySelector("textarea")?.focus();
 });
 
