@@ -57,6 +57,19 @@ export function searchQuery(question: string, history: readonly Turn[]): string 
   return estimateTokens(question) < 12 && last ? `${last.content} ${question}` : question;
 }
 
+const SMALL_TALK =
+  /^(?:hello|hi|hey|hiya|yo|hola|bonjour|bonsoir|salut|coucou|good (?:morning|afternoon|evening)|merci(?: beaucoup| bien)?|thanks?(?: you| a lot)?|thx|ok(?:ay)?|d accord|cool|super|parfait|great|nice|bye|goodbye|au revoir|ciao)(?: (?:murmur|there|toi|you|à toi))?$/;
+
+/** A greeting or a thank-you: nothing to look up, and no source should be cited for it. */
+export function isSmallTalk(question: string): boolean {
+  return SMALL_TALK.test(
+    question
+      .toLowerCase()
+      .replace(/[\p{P}\p{S}\s]+/gu, " ")
+      .trim(),
+  );
+}
+
 /** A question-answering engine over a site, without any UI. */
 export function createMurmur(options: MurmurOptions): Murmur {
   const retriever =
@@ -72,13 +85,18 @@ export function createMurmur(options: MurmurOptions): Murmur {
       const searchOptions: { limit?: number; budgetTokens?: number } = {};
       if (options.limit !== undefined) searchOptions.limit = options.limit;
       if (options.budgetTokens !== undefined) searchOptions.budgetTokens = options.budgetTokens;
-      const passages = await retriever.search(searchQuery(question, history), searchOptions);
+      const smallTalk = isSmallTalk(question);
+      const passages = smallTalk
+        ? []
+        : await retriever.search(searchQuery(question, history), searchOptions);
       const instructions = [
         options.instructions?.trim(),
         groundingRules(options.language),
-        passages.length
-          ? `Sources:\n\n${formatSources(passages)}`
-          : "Sources: none matched this question. Say you could not find it on this site.",
+        smallTalk
+          ? "The visitor is only greeting or thanking you: answer in one short, friendly sentence and invite a question about this site. Cite nothing."
+          : passages.length
+            ? `Sources:\n\n${formatSources(passages)}`
+            : "Sources: none matched this question. Say you could not find it on this site.",
       ]
         .filter(Boolean)
         .join("\n\n");

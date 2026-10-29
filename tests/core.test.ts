@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { convertArrayToReadableStream, MockLanguageModelV4 } from "ai/test";
-import { createMurmur, searchQuery } from "../src/core/murmur";
+import { createMurmur, isSmallTalk, searchQuery } from "../src/core/murmur";
 import { proxySettings } from "../src/llm/index";
 import { buildIndex } from "../src/rag/chunk";
 
@@ -61,6 +61,20 @@ describe("createMurmur", () => {
     expect(answer.passages).toEqual([]);
     for await (const _ of answer.textStream);
     expect(JSON.stringify(model.doStreamCalls[0]?.prompt[0])).toContain("none matched");
+  });
+
+  test("a greeting gets a greeting, without looking anything up", async () => {
+    const model = mockModel(["Bonjour ! Que voulez-vous savoir ?"]);
+    const answer = await createMurmur({ index, model }).ask("hello");
+    expect(answer.passages).toEqual([]);
+    for await (const _ of answer.textStream);
+    const system = JSON.stringify(model.doStreamCalls[0]?.prompt[0]);
+    expect(system).toContain("only greeting or thanking you");
+    expect(system).not.toContain("none matched");
+    expect(isSmallTalk("Bonjour !")).toBe(true);
+    expect(isSmallTalk("merci beaucoup 🙏")).toBe(true);
+    expect(isSmallTalk("hello, where is my key stored?")).toBe(false);
+    expect(isSmallTalk("plan")).toBe(false);
   });
 
   test("surfaces a provider error", async () => {
