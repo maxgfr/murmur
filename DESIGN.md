@@ -187,7 +187,7 @@ Strips 4px, plates 6px, controls 10px, panels 14px, chips and the launcher fully
 ### Jack field (signature)
 
 - One `.row` per page: a designation strip, then a grid of sockets (lamp, brass jack, a short engraved name: the heading up to its first pause, at most three words), padded with ghost jacks to the row's 12. On `murmur:state`: retrieved passages blink, cited ones light and get a cord drawn from the console (cubic curve with sag, drawn in 700ms with `cubic-bezier(0.16, 1, 0.3, 1)`, staggered 140ms, the plug fading in as it arrives; instant under reduced motion). Cords alternate red and black and end in a plug drawn over the jack.
-- Layers: jacks and their names, then the cords, then the strips and the operator log. Cords are never cut: names keep a soft ivory halo so they read where a cord crosses them.
+- Layers: the jacks, then the cords (plugs drawn over the jacks), then the lamps and the names, then the strips and the operator log. A cord never hides a name or a lit lamp, and is never cut: names have no box, only a thin ivory outline that keeps them readable where they cross a cord.
 
 ### Widget (`<murmur-chat>`)
 
