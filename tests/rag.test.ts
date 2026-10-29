@@ -4,12 +4,14 @@ import {
   bm25Retriever,
   buildIndex,
   citedSources,
+  dropUnknownCitations,
   formatSources,
   isMurmurIndex,
   markdownSections,
   passageHref,
   slugify,
   splitText,
+  stripCitations,
 } from "../src/rag/index";
 
 describe("splitText", () => {
@@ -75,6 +77,18 @@ describe("grounding", () => {
   });
   test("citedSources keeps valid numbers in order of first use", () => {
     expect(citedSources("A [2] B [1][2] C [9]", 2)).toEqual([2, 1]);
+  });
+  test("citedSources skips code and link labels", () => {
+    expect(citedSources("Use `a[1]` and [x](/y) [1](/z) as told [3].", 3)).toEqual([3]);
+    expect(citedSources("```\nlist[2]\n```\nSee [1].", 3)).toEqual([1]);
+  });
+  test("dropUnknownCitations removes numbers no source carries", () => {
+    expect(dropUnknownCitations("Yes [5] and [1][7].", 4)).toBe("Yes and [1].");
+    expect(dropUnknownCitations("Hi [1].", 0)).toBe("Hi.");
+    expect(dropUnknownCitations("Read list[9] or `a[9]`.", 4)).toBe("Read list[9] or `a[9]`.");
+  });
+  test("stripCitations leaves past answers without numbers", () => {
+    expect(stripCitations("It costs 12 € [1][2], see `a[1]`.")).toBe("It costs 12 €, see `a[1]`.");
   });
   test("passageHref adds the fragment", () => {
     expect(passageHref({ url: "/a/#old", anchor: "été" })).toBe("/a/#%C3%A9t%C3%A9");

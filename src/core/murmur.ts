@@ -2,9 +2,11 @@ import { type LanguageModel, type ModelMessage, streamText } from "ai";
 import {
   citedSources,
   cleanAnswer,
+  dropUnknownCitations,
   estimateTokens,
   formatSources,
   groundingRules,
+  stripCitations,
 } from "../rag/ground";
 import { bm25Retriever, type Retriever } from "../rag/retriever";
 import type { MurmurIndex, Passage } from "../rag/types";
@@ -102,7 +104,14 @@ export function createMurmur(options: MurmurOptions): Murmur {
         .join("\n\n");
       const turns = history.slice(-(options.historyTurns ?? 6) * 2);
       const messages: ModelMessage[] = [
-        ...turns.map((t) => ({ role: t.role, content: t.content }) as ModelMessage),
+        // Past answers lose their citations: this question's sources are numbered anew.
+        ...turns.map(
+          (t) =>
+            ({
+              role: t.role,
+              content: t.role === "assistant" ? stripCitations(t.content) : t.content,
+            }) as ModelMessage,
+        ),
         { role: "user", content: question },
       ];
       const model = typeof options.model === "function" ? await options.model() : options.model;
@@ -131,7 +140,7 @@ export function createMurmur(options: MurmurOptions): Murmur {
             text += part.text;
             yield part.text;
           }
-          text = cleanAnswer(text);
+          text = dropUnknownCitations(cleanAnswer(text), passages.length);
           settle({ text, cited: citedSources(text, passages.length) });
         } catch (error) {
           fail(error);

@@ -1,5 +1,5 @@
 import type { LlmSettingsState, LlmSettingsStore } from "../llm/index";
-import { citedSources, cleanAnswer, passageHref } from "../rag/ground";
+import { cleanAnswer, dropUnknownCitations, passageHref } from "../rag/ground";
 import { type Messages, messagesFor, pickLanguage } from "./i18n";
 import { icon } from "./icons";
 import { renderMarkdown } from "./markdown";
@@ -90,7 +90,6 @@ export class MurmurChat extends Base {
     this.controller?.abort();
     this.unsubscribe?.();
     this.unsubscribeLocal?.();
-    this.unsubscribeLocal?.();
   }
 
   /** Opens the panel and focuses the question field. */
@@ -134,6 +133,7 @@ export class MurmurChat extends Base {
     if (o.accent) this.style.setProperty("--murmur-accent", o.accent);
     this.controller?.abort();
     this.unsubscribe?.();
+    this.unsubscribeLocal?.();
 
     const doc = this.ownerDocument;
     const style = doc.createElement("style");
@@ -313,9 +313,14 @@ export class MurmurChat extends Base {
       const retry = el(doc, "button", { class: "text-btn", type: "button" });
       retry.textContent = this.t.retry;
       retry.addEventListener("click", () => {
-        const turns = this.session?.turns ?? [];
-        const question = turns.at(-2)?.content ?? "";
-        turns.splice(-2, 2);
+        if (this.controller || !this.session) return;
+        // This answer's own question, which need not be the last one asked.
+        const turns = this.session.turns;
+        const at = turns.indexOf(turn);
+        if (at < 1) return;
+        const question = turns[at - 1]?.content ?? "";
+        turns.splice(at - 1, 2);
+        this.session.persist();
         this.renderChat();
         if (question) void this.ask(question);
       });
@@ -333,18 +338,40 @@ export class MurmurChat extends Base {
       return;
     }
     const passages = turn.passages ?? [];
-    const content = cleanAnswer(turn.content);
-    // Sources are numbered 1, 2, 3 in the order the answer first cites them, whatever their
-    // place among the passages the model was given.
-    const order = citedSources(content, passages.length);
-    const label = (n: number) => order.indexOf(n) + 1;
+    const key = (n: number) => {
+      const p = passages[n - 1];
+      return p ? passageHref(p) : "";
+    };
+    // Two passages of one section are one source: "[2][3]" from the same heading cites it once.
+    const content = dropUnknownCitations(cleanAnswer(turn.content), passages.length).replace(
+      /(?:\[\d{1,2}\]){2,}/g,
+      (run) => {
+        const seen = new Set<string>();
+        return run.replace(/\[(\d{1,2})\]/g, (cite, n: string) => {
+          const k = key(Number(n));
+          if (seen.has(k)) return "";
+          seen.add(k);
+          return cite;
+        });
+      },
+    );
+    // Sources are numbered 1, 2, 3 in the order the answer first cites them as it is drawn,
+    // whatever their place among the passages the model was given; passages of the same
+    // section share a number, and a [1] in code or a link label is no citation.
+    const sources = new Map<string, { label: number; passage: (typeof passages)[number] }>();
     const body = el(doc, "div");
     renderMarkdown(body, content, (n) => {
       const p = passages[n - 1];
-      if (!p || !label(n)) return null;
-      const a = el(doc, "a", { class: "cite", href: passageHref(p) });
-      a.textContent = String(label(n));
-      a.setAttribute("aria-label", `${this.t.sources} ${label(n)}: ${p.title}`);
+      if (!p) return null;
+      const href = passageHref(p);
+      let source = sources.get(href);
+      if (!source) {
+        source = { label: sources.size + 1, passage: p };
+        sources.set(href, source);
+      }
+      const a = el(doc, "a", { class: "cite", href });
+      a.textContent = String(source.label);
+      a.setAttribute("aria-label", `${this.t.sources} ${source.label}: ${p.title}`);
       return a;
     });
     const parts: Node[] = [body];
@@ -356,16 +383,13 @@ export class MurmurChat extends Base {
       );
       parts.push(status);
     }
-    const cited = order;
-    if (finished && cited.length) {
+    if (finished && sources.size) {
       parts.push(text(doc, "p", this.t.sources, "sources-label"));
       const list = el(doc, "ol", { class: "sources" });
-      for (const n of cited) {
-        const p = passages[n - 1];
-        if (!p) continue;
+      for (const [href, { label, passage: p }] of sources) {
         const li = el(doc, "li");
-        const a = el(doc, "a", { href: passageHref(p) });
-        const ring = text(doc, "span", String(label(n)), "cite");
+        const a = el(doc, "a", { href });
+        const ring = text(doc, "span", String(label), "cite");
         ring.setAttribute("aria-hidden", "true");
         const where = el(doc, "span", { class: "where" });
         where.append(doc.createTextNode(p.title || p.url));

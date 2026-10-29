@@ -17,6 +17,9 @@ describe("cleanAnswer", () => {
     expect(cleanAnswer("Yes [1, 2] and 【3】 and [Source 4].")).toBe("Yes [1][2] and [3] and [4].");
     expect(cleanAnswer("See the guides [1-3].")).toBe("See the guides [1][2][3].");
     expect(cleanAnswer("Years [2024-2026].")).toBe("Years [2024-2026].");
+    expect(cleanAnswer("Oui [Source 2, 3] et [Sources 1 et 4].")).toBe("Oui [2][3] et [1][4].");
+    expect(cleanAnswer("Oui [source: 2] et [réf. 3].")).toBe("Oui [2] et [3].");
+    expect(cleanAnswer("Selon (Source 2), oui.")).toBe("Selon [2], oui.");
   });
   test("turns sources named in words into citations", () => {
     expect(cleanAnswer("D'après Source 1 et Source 4, la clé reste ici.")).toBe(
@@ -24,6 +27,8 @@ describe("cleanAnswer", () => {
     );
     expect(cleanAnswer("Selon la source 2, oui.")).toBe("Selon [2], oui.");
     expect(cleanAnswer("See sources 1 and 3.")).toBe("See [1][3].");
+    expect(cleanAnswer("Voir les sources 1 à 3.")).toBe("Voir [1][2][3].");
+    expect(cleanAnswer("See sources 1-2.")).toBe("See [1][2].");
     expect(cleanAnswer("It is open source 2 times over.")).toBe("It is open source 2 times over.");
     expect(cleanAnswer("The sources say 1 thing.")).toBe("The sources say 1 thing.");
   });
@@ -31,6 +36,15 @@ describe("cleanAnswer", () => {
     expect(cleanAnswer("Open at 7 [1].\n\nSources: [1], [2]")).toBe("Open at 7 [1].");
     expect(cleanAnswer("Open at 7 [1].\n\n**Sources :** 1, 2.")).toBe("Open at 7 [1].");
     expect(cleanAnswer("The sources say 1 thing.")).toBe("The sources say 1 thing.");
+  });
+  test("drops a trailing list of sources with their titles", () => {
+    expect(cleanAnswer("Open [1].\n\n**Sources :**\n- [1] Guide › Install\n- [2] FAQ")).toBe(
+      "Open [1].",
+    );
+    expect(cleanAnswer("Open [1].\n\n### Sources\n\n1. Guide\n2. FAQ\n")).toBe("Open [1].");
+    expect(cleanAnswer("Steps:\n1. Install [1]\n2. Run [2]")).toBe(
+      "Steps:\n1. Install [1]\n2. Run [2]",
+    );
   });
 });
 

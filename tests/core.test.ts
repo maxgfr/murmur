@@ -77,6 +77,21 @@ describe("createMurmur", () => {
     expect(isSmallTalk("plan")).toBe(false);
   });
 
+  test("cites only the sources it was given, and past answers lose their numbers", async () => {
+    const model = mockModel(["It costs 12 € [1], see also [4]."]);
+    const answer = await createMurmur({ index, model }).ask("pro plan price?", {
+      history: [
+        { role: "user", content: "free plan?" },
+        { role: "assistant", content: "There is none [3][1]." },
+      ],
+    });
+    for await (const _ of answer.textStream);
+    expect(await answer.done).toEqual({ text: "It costs 12 € [1], see also.", cited: [1] });
+    const past = JSON.stringify(model.doStreamCalls[0]?.prompt.slice(1));
+    expect(past).toContain("There is none.");
+    expect(past).not.toContain("[3]");
+  });
+
   test("surfaces a provider error", async () => {
     const model = new MockLanguageModelV4({
       doStream: async () => {
