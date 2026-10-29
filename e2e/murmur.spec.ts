@@ -41,6 +41,34 @@ test("the in-browser model comes first, a visitor's key can replace it, then the
   await expect(page.locator("#cords path.core")).toHaveCount(2);
   await expect(page.locator("#oplog")).toContainText("Patched to");
   await expect(page.locator(".socket.patched")).toHaveCount(2);
+  // Cords are dressed around the panel: none crosses a name, a lamp, a strip or another jack.
+  await page.waitForTimeout(1200);
+  const crossings = await page.evaluate(() => {
+    const svg = document.getElementById("cords") as unknown as SVGSVGElement;
+    const origin = svg.getBoundingClientRect();
+    const hit = (r: DOMRect, x: number, y: number) =>
+      x > r.left && x < r.right && y > r.top && y < r.bottom;
+    const obstacles = [
+      ...document.querySelectorAll("#jackfield .tag, #jackfield .lamp, #jackfield .strip"),
+    ].map((el) => el.getBoundingClientRect());
+    const jacks = [...document.querySelectorAll("#jackfield .jack")].map((el) =>
+      el.getBoundingClientRect(),
+    );
+    let count = 0;
+    for (const path of svg.querySelectorAll<SVGPathElement>("path.core")) {
+      const length = path.getTotalLength();
+      const end = path.getPointAtLength(length);
+      for (let at = 0; at < length; at += 4) {
+        const p = path.getPointAtLength(at);
+        const [x, y] = [p.x + origin.left, p.y + origin.top];
+        const own = Math.hypot(p.x - end.x, p.y - end.y) < 30;
+        if (obstacles.some((r) => hit(r, x, y)) || (!own && jacks.some((r) => hit(r, x, y))))
+          count++;
+      }
+    }
+    return count;
+  });
+  expect(crossings).toBe(0);
 
   // The key stays the choice after a reload, until the visitor switches back.
   await page.reload();

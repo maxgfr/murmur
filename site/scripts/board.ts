@@ -12,6 +12,20 @@ interface Socket {
   lamp: HTMLElement;
 }
 
+/** An orthogonal path through the points, its corners rounded like a cord bent by hand. */
+function rounded(points: { x: number; y: number }[], radius: number) {
+  return points.reduce((d, b, n) => {
+    const a = points[n - 1];
+    const c = points[n + 1];
+    if (!a) return `M ${b.x} ${b.y}`;
+    if (!c) return `${d} L ${b.x} ${b.y}`;
+    const into = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const out = Math.hypot(c.x - b.x, c.y - b.y) || 1;
+    const r = Math.min(radius, into / 2, out / 2);
+    return `${d} L ${b.x - ((b.x - a.x) / into) * r} ${b.y - ((b.y - a.y) / into) * r} Q ${b.x} ${b.y} ${b.x + ((c.x - b.x) / out) * r} ${b.y + ((c.y - b.y) / out) * r}`;
+  }, "");
+}
+
 /** The jack field: one jack per section of the site, lit and patched as the widget answers. */
 export function switchboard(
   field: HTMLElement,
@@ -108,19 +122,57 @@ export function switchboard(
     cords.replaceChildren();
     const box = board.getBoundingClientRect();
     const hs = handset.getBoundingClientRect();
+    const fieldLeft = field.getBoundingClientRect().left - box.left;
     const stacked = hs.bottom <= box.top + 4;
     const sx = stacked ? hs.left + hs.width / 2 - box.left : hs.right - box.left;
     const sy = stacked ? 0 : hs.top + hs.height * 0.62 - box.top;
     cords.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
-    patched.forEach((key, i) => {
-      const s = sockets.get(key);
-      if (!s) return;
-      const j = s.el.querySelector(".jack")?.getBoundingClientRect();
-      if (!j) return;
-      const ex = j.left + j.width / 2 - box.left;
-      const ey = j.top + j.height / 2 - box.top;
-      const sag = 60 + Math.abs(ex - sx) * 0.18 + i * 14;
-      const d = `M ${sx} ${sy + i * 8} C ${sx + (ex - sx) * 0.35} ${Math.max(sy, ey) + sag}, ${ex - (ex - sx) * 0.15} ${ey + sag * 0.6}, ${ex} ${ey}`;
+    // A cord is dressed along the panel, never across it: out of the handset, down the margin
+    // left of the jack field, along the gap under its row, up between two columns of jacks,
+    // then sideways into its jack. It crosses no name, no lamp and no other jack.
+    const runs = patched
+      .map((key, i) => {
+        const s = sockets.get(key);
+        const j = s?.el.querySelector(".jack")?.getBoundingClientRect();
+        const row = s?.el.closest(".row")?.getBoundingClientRect();
+        if (!s || !j || !row) return null;
+        const gap = parseFloat(getComputedStyle(field).rowGap) || 20;
+        const between = parseFloat(getComputedStyle(s.el.parentElement ?? field).columnGap) || 8;
+        return {
+          i,
+          side: Math.min(
+            box.width - 4,
+            s.el.getBoundingClientRect().right + between / 2 - box.left,
+          ),
+          ex: j.left + j.width / 2 - box.left,
+          ey: j.top + j.height / 2 - box.top,
+          lane: row.bottom + gap / 2 - box.top,
+        };
+      })
+      .filter((r) => !!r)
+      .sort((a, b) => a.lane - b.lane || a.ex - b.ex);
+    // A narrow margin (on a phone) packs the cords closer.
+    const step = Math.min(7, Math.max(3, (fieldLeft - 10) / Math.max(1, runs.length)));
+    runs.forEach(({ i, side, ex, ey, lane }, k) => {
+      // Higher rows take the inner margin, so no cord crosses another's turn into its lane;
+      // in a lane, the nearer jack's cord runs on top.
+      const peers = runs.filter((r) => r.lane === lane);
+      const rank = peers.findIndex((r) => r.i === i);
+      const y = lane + (rank - (peers.length - 1) / 2) * 6;
+      const gx = Math.max(4, fieldLeft - 12 - k * step);
+      // The innermost cord leaves the handset last, so it never crosses the others' descent.
+      const start = { x: sx, y: (stacked ? 6 : sy) + (runs.length - 1 - k) * step };
+      const d = rounded(
+        [
+          start,
+          { x: gx, y: start.y },
+          { x: gx, y },
+          { x: side, y },
+          { x: side, y: ey },
+          { x: ex, y: ey },
+        ],
+        16,
+      );
       // Cords alternate red and black, as on a real board.
       const cord = document.createElementNS(SVG, "g");
       if (i % 2) cord.setAttribute("class", "black");
