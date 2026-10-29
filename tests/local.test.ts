@@ -18,6 +18,15 @@ describe("cleanAnswer", () => {
     expect(cleanAnswer("See the guides [1-3].")).toBe("See the guides [1][2][3].");
     expect(cleanAnswer("Years [2024-2026].")).toBe("Years [2024-2026].");
   });
+  test("turns sources named in words into citations", () => {
+    expect(cleanAnswer("D'après Source 1 et Source 4, la clé reste ici.")).toBe(
+      "D'après [1] et [4], la clé reste ici.",
+    );
+    expect(cleanAnswer("Selon la source 2, oui.")).toBe("Selon [2], oui.");
+    expect(cleanAnswer("See sources 1 and 3.")).toBe("See [1][3].");
+    expect(cleanAnswer("It is open source 2 times over.")).toBe("It is open source 2 times over.");
+    expect(cleanAnswer("The sources say 1 thing.")).toBe("The sources say 1 thing.");
+  });
   test("drops a trailing sources line the interface already shows", () => {
     expect(cleanAnswer("Open at 7 [1].\n\nSources: [1], [2]")).toBe("Open at 7 [1].");
     expect(cleanAnswer("Open at 7 [1].\n\n**Sources :** 1, 2.")).toBe("Open at 7 [1].");

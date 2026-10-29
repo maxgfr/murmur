@@ -42,36 +42,48 @@ export function groundingRules(language?: string): string {
 /**
  * An answer as a visitor should read it, whatever the model: reasoning blocks and copied
  * source delimiters removed (also half-written ones while streaming), citation variants
- * (`[1, 2]`, `[Source 1]`, `【1】`) written as `[1][2]`, and a trailing "Sources: 1, 2"
+ * (`[1, 2]`, `[Source 1]`, `【1】`, "Source 1 et Source 4") written as `[1][2]`, and a trailing "Sources: 1, 2"
  * line dropped, since the interface lists the sources itself.
  */
 export function cleanAnswer(text: string): string {
-  return text
-    .replace(/<think>[\s\S]*?(<\/think>|$)/gi, "")
-    .replace(/[ \t]*<<<\s*(?:END\s+)?SOURCE\b[^>\n]*>{0,3}\.?/gi, "")
-    .replace(/<{1,3}(?:\s*E(?:N(?:D)?)?)?\s*(?:S(?:O(?:U(?:R(?:C(?:E)?)?)?)?)?)?$/i, (m) =>
-      m.startsWith("<<") || /[A-Z]/i.test(m) ? "" : m,
-    )
-    .replace(/【\s*(\d{1,2})\s*】/g, "[$1]")
-    .replace(/\[\s*(?:sources?|src|réf\.?|ref\.?)\s*(\d{1,2})\s*\]/gi, "[$1]")
-    .replace(/\[\s*(\d{1,2})\s*[-–]\s*(\d{1,2})\s*\]/g, (all, a: string, b: string) => {
-      const from = Number(a);
-      const to = Number(b);
-      if (to <= from || to - from > 8) return all;
-      return Array.from({ length: to - from + 1 }, (_, i) => `[${from + i}]`).join("");
-    })
-    .replace(/\[\s*(\d{1,2}(?:\s*[,;]\s*\d{1,2})+)\s*\]/g, (_, list: string) =>
-      list
-        .split(/[,;]/)
-        .map((n) => `[${n.trim()}]`)
-        .join(""),
-    )
-    .replace(
-      /\n+\s*\**\s*(?:sources?|références?|references?)\s*:?\s*\**\s*:?\s*(?:\[?\d{1,2}\]?[\s,;.]*)+$/i,
-      "",
-    )
-    .replace(/\n{3,}/g, "\n\n")
-    .trimEnd();
+  return (
+    text
+      .replace(/<think>[\s\S]*?(<\/think>|$)/gi, "")
+      .replace(/[ \t]*<<<\s*(?:END\s+)?SOURCE\b[^>\n]*>{0,3}\.?/gi, "")
+      .replace(/<{1,3}(?:\s*E(?:N(?:D)?)?)?\s*(?:S(?:O(?:U(?:R(?:C(?:E)?)?)?)?)?)?$/i, (m) =>
+        m.startsWith("<<") || /[A-Z]/i.test(m) ? "" : m,
+      )
+      .replace(/【\s*(\d{1,2})\s*】/g, "[$1]")
+      .replace(/\[\s*(?:sources?|src|réf\.?|ref\.?)\s*(\d{1,2})\s*\]/gi, "[$1]")
+      .replace(/\[\s*(\d{1,2})\s*[-–]\s*(\d{1,2})\s*\]/g, (all, a: string, b: string) => {
+        const from = Number(a);
+        const to = Number(b);
+        if (to <= from || to - from > 8) return all;
+        return Array.from({ length: to - from + 1 }, (_, i) => `[${from + i}]`).join("");
+      })
+      .replace(/\[\s*(\d{1,2}(?:\s*[,;]\s*\d{1,2})+)\s*\]/g, (_, list: string) =>
+        list
+          .split(/[,;]/)
+          .map((n) => `[${n.trim()}]`)
+          .join(""),
+      )
+      .replace(
+        /\n+\s*\**\s*(?:sources?|références?|references?)\s*:?\s*\**\s*:?\s*(?:\[?\d{1,2}\]?[\s,;.]*)+$/i,
+        "",
+      )
+      // Small models name sources in words ("Source 1 et Source 4", "la source 2"): as plain
+      // text they would keep the model's numbers while the list below is renumbered.
+      .replace(
+        /(?<!\bopen[\s-])\b(?:(?:la|les|the)\s+)?sources?\s+(?:n°\s*)?(\d{1,2}(?:\s*(?:,|et|and|&)\s*\d{1,2})*)\b/gi,
+        (_, list: string) =>
+          list
+            .split(/\s*(?:,|et|and|&)\s*/i)
+            .map((n) => `[${n.trim()}]`)
+            .join(""),
+      )
+      .replace(/\n{3,}/g, "\n\n")
+      .trimEnd()
+  );
 }
 
 /** The source numbers an answer cites, in order of first use, keeping only those that were given. */
