@@ -386,7 +386,8 @@ html {
 .field-board > .strip {
   font-size: 13px;
 }
-/* Layers of the board: jacks and their names, then the cords, then the strips and the log. */
+/* Layers of the board: the jacks, then the cords (their plugs over the jacks), then the lamps
+   and the names, then the strips and the log. A cord never hides a name or a lit lamp. */
 .jackfield {
   display: grid;
   gap: calc(var(--u) * 2.5);
@@ -414,13 +415,29 @@ html {
   text-decoration: none;
   color: inherit;
 }
+.socket .lamp,
+.socket .tag,
+.jackfield .note {
+  position: relative;
+  z-index: 3;
+}
+.jackfield .note {
+  text-shadow:
+    0 0 4px var(--ivory),
+    0 0 6px var(--ivory);
+}
 .socket .tag {
   max-width: 100%;
   padding: 0 4px;
-  /* Names stay readable where a cord crosses them, without hiding the cord. */
+  /* Names sit over the cords with no box, so a cord is never cut: an ivory outline
+     keeps the letters readable where they cross one. */
   text-shadow:
-    0 0 2px var(--ivory),
-    0 0 3px var(--ivory);
+    1px 0 0 var(--ivory),
+    -1px 0 0 var(--ivory),
+    0 1px 0 var(--ivory),
+    0 -1px 0 var(--ivory),
+    0 0 4px var(--ivory),
+    0 0 6px var(--ivory);
   font-family: var(--display);
   font-size: 12px;
   font-weight: 600;
