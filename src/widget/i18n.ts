@@ -35,6 +35,8 @@ export interface Messages {
   testFail: string;
   save: string;
   forget: string;
+  /** The settings work for this page but could not be stored (the site's storage is full). */
+  notStored: string;
   loadingCatalog: string;
   catalogError: string;
   searchModels: string;
@@ -94,6 +96,7 @@ const en: Messages = {
   testFail: "Connection failed:",
   save: "Save and chat",
   forget: "Forget my key",
+  notStored: "Storage for this site is full: these settings will be lost when you leave the page.",
   loadingCatalog: "Loading models…",
   catalogError: "Could not load the model list.",
   searchModels: "Search models",
@@ -158,6 +161,8 @@ const fr: Messages = {
   testFail: "Échec de la connexion :",
   save: "Enregistrer et discuter",
   forget: "Oublier ma clé",
+  notStored:
+    "Le stockage de ce site est plein : ces réglages seront perdus quand vous quitterez la page.",
   loadingCatalog: "Chargement des modèles…",
   catalogError: "Impossible de charger la liste des modèles.",
   searchModels: "Chercher un modèle",

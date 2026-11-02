@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, spyOn, test } from "bun:test";
+import type { LlmSettings } from "llm-connect";
 import { optionsFromDataset } from "../src/embed";
 import { ChatSession } from "../src/widget/session";
 import { installBrowserGlobals } from "./stubs";
@@ -70,5 +71,40 @@ describe("no key in the page", () => {
     expect(JSON.stringify(options)).not.toContain("sk-x");
     expect(error).toHaveBeenCalled();
     error.mockRestore();
+  });
+});
+
+describe("a full storage (an origin shared with other sites)", () => {
+  const fill = () => {
+    localStorage.setItem = () => {
+      throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
+    };
+  };
+
+  test("the visitor's choice of their own key holds for the page", () => {
+    fill();
+    const s = new ChatSession({});
+    s.useLocal(false);
+    expect(s.mode).toBe("visitor");
+    s.useLocal(true);
+    expect(s.mode).toBe("local");
+  });
+
+  test("consent to the download holds for the page", () => {
+    fill();
+    const s = new ChatSession({ preload: "consent" });
+    s.agreeToDownload();
+    expect(s.needsDownloadConsent).toBe(false);
+  });
+
+  test("settings that could not be stored still answer, until forgotten", async () => {
+    fill();
+    const s = new ChatSession({ mode: "key" });
+    expect(await s.needsSetup()).toBe(true);
+    const settings: LlmSettings = { providerId: "openai", model: "gpt-x", apiKey: "sk-test" };
+    s.keepForPage(settings);
+    expect(await s.settings()).toEqual(settings);
+    s.keepForPage(null);
+    expect(await s.needsSetup()).toBe(true);
   });
 });
