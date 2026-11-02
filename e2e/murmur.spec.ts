@@ -19,6 +19,31 @@ test("proxy mode: answers with citations and no settings screen", async ({ page 
   await expect(widget.getByRole("button", { name: "AI settings" })).toBeHidden();
 });
 
+test("when the site's storage is full, a visitor's settings say they will not last", async ({
+  page,
+}) => {
+  await offlineCatalog(page);
+  // On a GitHub Pages user site, every project page shares one origin and one quota.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "gpu", { configurable: true, value: undefined });
+    Storage.prototype.setItem = () => {
+      throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
+    };
+  });
+  await page.goto("/murmur/");
+  const widget = page.locator("#handset murmur-chat");
+  await page.getByRole("button", { name: "How do I add it to my site?" }).click();
+  await expect(widget.locator(".consent")).toContainText("no WebGPU");
+  await widget.getByRole("button", { name: "Use an API key instead" }).click();
+  await expect(widget.getByText("Connect an AI model")).toBeVisible();
+  await widget.getByLabel("Local server (Ollama, LM Studio)").check();
+  await widget.getByLabel("Server URL").fill("http://localhost:4317/mock/v1");
+  await widget.getByLabel("Model", { exact: true }).last().fill("mock");
+  await widget.getByRole("button", { name: "Save and chat" }).click();
+  await expect(widget.getByRole("alert")).toContainText("Storage for this site is full");
+  await expect(widget.getByRole("log")).toContainText("one script tag");
+});
+
 test("the in-browser model comes first, a visitor's key can replace it, then the board patches cords", async ({
   page,
 }) => {

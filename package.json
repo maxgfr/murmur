@@ -107,7 +107,7 @@
     "@ai-sdk/openai-compatible": "^3.0.80",
     "ai": "^7.0.155",
     "linkedom": "^0.18.14",
-    "llm-connect": "^2.5.0",
+    "llm-connect": "^2.6.0",
     "llm-models": "^1.14.0",
     "minisearch": "^7.2.0",
     "@ai-sdk/provider": "^4.0.34"

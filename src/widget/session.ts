@@ -79,6 +79,10 @@ export class ChatSession {
   turns: ChatTurn[] = [];
   private engine: Promise<Murmur> | null = null;
   private storePromise: Promise<LlmSettingsStore> | null = null;
+  private pageSettings: LlmSettings | null = null;
+  // Choices localStorage refused (blocked, or full because another site on the same origin
+  // filled it, as on a GitHub Pages user site): they hold until the page goes.
+  private readonly choices = new Map<string, string | null>();
   private readonly historyKey: string;
   private readonly key: string;
   private local: LocalState = { status: "idle" };
@@ -109,7 +113,7 @@ export class ChatSession {
     if (m === "proxy" || (m === "auto" && this.options.llm?.endpoint)) return "proxy";
     if (m === "local") return "local";
     if (m === "key" || !this.localAllowed) return "visitor";
-    return readLocal(`${this.key}-local`) === "0" ? "visitor" : "local";
+    return this.readChoice(`${this.key}-local`) === "0" ? "visitor" : "local";
   }
 
   /** Whether the in-browser model is offered at all. */
@@ -177,10 +181,11 @@ export class ChatSession {
    * and never chose between the two, keeps their key.
    */
   async settleChoice(): Promise<void> {
-    if (!this.localAllowed || !this.keyAllowed || readLocal(`${this.key}-local`) !== null) return;
+    if (!this.localAllowed || !this.keyAllowed || this.readChoice(`${this.key}-local`) !== null)
+      return;
     const [{ isConfigured }, store] = await Promise.all([import("../llm/index"), this.store()]);
     const saved = await store.load();
-    if (saved && isConfigured(saved)) writeLocal(`${this.key}-local`, "0");
+    if (saved && isConfigured(saved)) this.writeChoice(`${this.key}-local`, "0");
   }
 
   /** The in-browser model this session would run. */
@@ -190,9 +195,18 @@ export class ChatSession {
     return (await import("../local/index")).DEFAULT_LOCAL_MODEL;
   }
 
+  private readChoice(key: string): string | null {
+    return this.choices.has(key) ? (this.choices.get(key) ?? null) : readLocal(key);
+  }
+
+  private writeChoice(key: string, value: string | null): void {
+    if (writeLocal(key, value)) this.choices.delete(key);
+    else this.choices.set(key, value);
+  }
+
   /** The visitor picks the in-browser model, or their own key. */
   useLocal(on: boolean): void {
-    writeLocal(`${this.key}-local`, on ? "1" : "0");
+    this.writeChoice(`${this.key}-local`, on ? "1" : "0");
     this.engine = null;
   }
 
@@ -202,12 +216,12 @@ export class ChatSession {
       this.mode === "local" &&
       this.preload === "consent" &&
       this.local.status !== "ready" &&
-      readLocal(`${this.key}-local-consent`) !== "1"
+      this.readChoice(`${this.key}-local-consent`) !== "1"
     );
   }
 
   agreeToDownload(): void {
-    writeLocal(`${this.key}-local-consent`, "1");
+    this.writeChoice(`${this.key}-local-consent`, "1");
   }
 
   persist(): void {
@@ -234,6 +248,15 @@ export class ChatSession {
     return this.storePromise;
   }
 
+  /**
+   * Settings the visitor saved that the storage could not keep (full or blocked): they still
+   * answer until the page goes, instead of asking for the key again at the next question.
+   */
+  keepForPage(settings: LlmSettings | null): void {
+    this.pageSettings = settings;
+    this.engine = null;
+  }
+
   /** The settings to call, or null when the visitor has to set up a model first. */
   async settings(): Promise<LlmSettings | null> {
     const mode = this.mode;
@@ -241,6 +264,7 @@ export class ChatSession {
     const llm = await import("../llm/index");
     const config = this.options.llm ?? {};
     if (mode === "proxy") return llm.proxySettings(config);
+    if (this.pageSettings) return this.pageSettings;
     return llm.resolveSettings({ ...config, endpoint: "" }, await this.store());
   }
 
@@ -380,11 +404,15 @@ function readLocal(key: string): string | null {
   }
 }
 
-function writeLocal(key: string, value: string | null): void {
+/** False when localStorage refused the value (blocked, or full: see `ChatSession.choices`). */
+function writeLocal(key: string, value: string | null): boolean {
   try {
     if (value === null) localStorage.removeItem(key);
     else localStorage.setItem(key, value);
-  } catch {}
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Thrown when the visitor must pick a model before asking. */

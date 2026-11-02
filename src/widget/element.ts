@@ -66,6 +66,7 @@ export class MurmurChat extends Base {
   private unsubscribe: (() => void) | null = null;
   private unsubscribeLocal: (() => void) | null = null;
   private loadbar!: HTMLElement;
+  private storageNote!: HTMLElement;
 
   constructor() {
     super();
@@ -217,7 +218,11 @@ export class MurmurChat extends Base {
     });
     by.textContent = this.t.poweredBy;
     footer.append(by);
-    this.chatView.append(this.log, this.loadbar, form, footer);
+    // Settings that work for the page but could not be stored (see the setup's save).
+    this.storageNote = el(doc, "p", { class: "loadbar error", role: "alert" });
+    this.storageNote.textContent = this.t.notStored;
+    this.storageNote.hidden = true;
+    this.chatView.append(this.log, this.loadbar, this.storageNote, form, footer);
 
     this.setupView = el(doc, "div", { class: "setup" });
     this.setupView.hidden = true;
@@ -653,13 +658,21 @@ export class MurmurChat extends Base {
       const saved = await store.save();
       if (!saved.ok) return;
       session.useLocal(false);
+      // Another site sharing this origin may have filled its storage: the settings answer for
+      // this page, and the visitor is told they will not last.
+      session.keepForPage(saved.persisted ? null : saved.settings);
       this.hideSetup();
+      this.storageNote.hidden = saved.persisted;
       if (pending) {
         this.input.value = pending;
         void this.submit();
       }
     });
-    forget.addEventListener("click", () => void store.clear());
+    forget.addEventListener("click", () => {
+      session.keepForPage(null);
+      this.storageNote.hidden = true;
+      void store.clear();
+    });
 
     const testRow = el(doc, "div", { class: "row" });
     testRow.append(testBtn, result);
